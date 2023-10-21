@@ -68,7 +68,7 @@ def LocalGlobal_Deviant(X,Y):
     return mergeL(duplicateL([X], 3),[Y])
 
 def LocalGlobal_Omission(X,Y):
-    return mergeL(duplicateL([X], 3), [np.zeros(1)])
+    return mergeL(duplicateL([X], 3), [[-1]])
 
 def RandReg_Rcyc(*args):
     # RandReg but Rcyc is to be defined.
@@ -374,9 +374,6 @@ class RandReg_structure(SoundGenerator,ElementMasking):
                     alphabet=alphabet)
         size_rand = size_reg
 
-        if(seqid == 'LocalGlobal_Omission'):
-            print(reg)
-
         if sampleRandInAlphabet:
             rands = np.random.choice(np.concatenate(alphabet), replace=True, size=size_rand)
             while rands[0] == reg[-size_rand]:
@@ -483,6 +480,8 @@ class RandReg_structure(SoundGenerator,ElementMasking):
                 tones = cls.get_tones(frequencies, samplerate, duration_tone, consine_rmp_length,
                                       duration_silence = seqInfo.soa[seqid])
 
+                tones = np.append(tones, np.zeros((1, len(tones[0])), dtype=np.float32), axis=0)
+
                 for vary_outer_sequence,typeTask in zip([False,True],["Detect","Generalize"]):
                     fileName = blockName+"_"+seqid+"_"+typeTask
 
@@ -508,13 +507,7 @@ class RandReg_structure(SoundGenerator,ElementMasking):
                     sound_block = np.array([s[0] for s in sound_mat],dtype=int)
                     sound_names = np.array(sound_names)
 
-                    if (seqid == 'LocalGlobal_Omission'):
-                        print(sound_mat)
-
                     sound_mat = np.stack([tones[sound_block[i,:],:].reshape(-1) for i in range(sound_block.shape[0])],axis=0)
-
-                    if (seqid == 'LocalGlobal_Omission'):
-                        print(sound_mat)
 
                     os.makedirs(os.path.join(dirZarr, fileName),exist_ok=True)
                     zg = zr.open_group(os.path.join(dirZarr, fileName, "sounds.zarr"), mode="w")
