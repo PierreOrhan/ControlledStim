@@ -508,7 +508,13 @@ class RandReg_structure(SoundGenerator,ElementMasking):
                     sound_block = np.array([s[0] for s in sound_mat],dtype=int)
                     sound_names = np.array(sound_names)
 
+                    if (seqid == 'LocalGlobal_Omission'):
+                        print(sound_mat)
+
                     sound_mat = np.stack([tones[sound_block[i,:],:].reshape(-1) for i in range(sound_block.shape[0])],axis=0)
+
+                    if (seqid == 'LocalGlobal_Omission'):
+                        print(sound_mat)
 
                     os.makedirs(os.path.join(dirZarr, fileName),exist_ok=True)
                     zg = zr.open_group(os.path.join(dirZarr, fileName, "sounds.zarr"), mode="w")
