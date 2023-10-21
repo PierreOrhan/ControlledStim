@@ -526,7 +526,7 @@ class RandReg_structure(SoundGenerator,ElementMasking):
         Rcyc,frequencies,samplerate,duration_tone,consine_rmp_length,cyc_names = cls.get_info()
         seqInfo = cls.get_all_seq()
 
-        exception = {"block1":["LOT_repeat"]} #{}
+        exception = {"block1":["LOT_repeat"]}  #{}
         for blockName,rcyc in zip(cyc_names,Rcyc):
             list_seq = list(seqInfo.seqs.keys())
             if blockName in exception.keys():
