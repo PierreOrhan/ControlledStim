@@ -45,35 +45,32 @@ from typing import Dict
 @dataclass
 class SeqsInfo:
     seqs : Dict = None
-    seqs_number_element : Dict = None
-    seqs_subsize_add : Dict = None
-    seqs_inner_repeat: Dict =None
-    seqs_deviants_pos: Dict = None
     soa : Dict = None # silence between stimulis
-    seqs_diversity : Dict[str,int] = None # constraint the size of the original alphabet when sampling inside a sequence
+    nbN : Dict = None
+    nbRN : Dict = None
+    nbRefRN : Dict = None
 
 def get_all_sequences():
     seqs = {
         "Exp1":Exp1}
-    seqs_number_element = {
-            "Exp1":2}
-
-    seqs_subsize_add = {
-        "Exp1":[0,0]}
-            # we can vary the size of the inner motives by adding to the initial size...
 
     # To retrieve the original LOT experimentsClass with 16 tones, sequences are composed of 16 tones,
     # which are often composed of a repetition of a sub-motif
     # we indicate here the amount of repetition of that motif:
-    seqs_inner_repeat = {
-            "Exp1":8}
-    seqs_deviants_pos = {
-               "Exp1" : [0]}
 
     soa = {
            "Exp1" : 1000}
 
-    return SeqsInfo(seqs,seqs_number_element,seqs_subsize_add,seqs_inner_repeat,seqs_deviants_pos,soa)
+    nbN = {
+        "Exp1": 50}
+
+    nbRN = {
+        "Exp1": 100}
+
+    nbRefRN = {
+        "Exp1": 50}
+
+    return SeqsInfo(seqs, soa, nbN, nbRN, nbRefRN)
 
 class RFRAM_structure(SoundGenerator,ElementMasking):
 
@@ -87,24 +84,24 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
         # frequencies_fundamental = np.logspace(np.log(222),np.log(500),20,base = np.exp(1))
         # frequencies = np.array([[f,f*2,f*4] for f in frequencies_fundamental])
 
-        duration_tone = 500  # ms, duration of the tone
-        consine_rmp_length = 5  # ms, duration of the upper and lower cosine ramp
-
-        # Rcyc = [1,5,10] #15,20,40
-        # cyc_names = ["block1","block5","block10"]
-        Rcyc = [1]
         cyc_names = ["block1"]
 
         # nb_Rcyc = 8 # NOTE: in the original experiment this is varied between 7 or 8
 
-        if with_dict:
-            return {"Rcyc": Rcyc, "samplerate": samplerate,
-                    "duration_tone": duration_tone, "consine_rmp_length": consine_rmp_length}
+        n_gaussian = 10
+        range_mean = [-0.5, 0.5]
+        range_sd = [0, 0.5]
 
-        return Rcyc, samplerate, duration_tone, consine_rmp_length, cyc_names
+        if with_dict:
+            return {"samplerate": samplerate, "cyc_names": cyc_names,
+                    "n_gaussian": n_gaussian, "range_mean": range_mean, "range_sd": range_sd}
+
+        return samplerate, cyc_names, n_gaussian, range_mean, range_sd
 
     @classmethod
     def _N(cls, samplerate, n_gaussian, range_mean, range_sd):
+
+        seqInfo = cls.get_all_seq()
 
         mean = np.random.uniform(range_mean[0], range_mean[1])
         stddev = np.random.uniform(range_sd[0], range_sd[1])
@@ -112,10 +109,15 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
         noise = np.random.normal(mean, stddev, (n_gaussian, samplerate))
         noise = np.sum(noise, axis=0)
 
+        blank = np.zeros((1, len(noise)))
+        repeated_noise = np.concatenate((noise, blank))
+
         return noise
 
     @classmethod
     def _RN(cls, samplerate, n_gaussian, range_mean, range_sd):
+
+        seqInfo = cls.get_all_seq()
 
         mean = np.random.uniform(range_mean[0], range_mean[1])
         stddev = np.random.uniform(range_sd[0], range_sd[1])
@@ -123,6 +125,9 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
         noise = np.random.normal(mean, stddev, (n_gaussian, samplerate/2))
         noise = np.sum(noise, axis=0)
         repeated_noise = np.concatenate((noise, noise))
+
+        blank = np.zeros((1, len(repeated_noise)))
+        repeated_noise = np.concatenate((repeated_noise, blank))
 
         return repeated_noise
 
@@ -133,14 +138,14 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
     @classmethod
     def generateSounds(cls,dirWav: Union[str,pathlib.Path], dirZarr: Union[str,pathlib.Path]):
 
-        Rcyc,samplerate,duration_tone,consine_rmp_length,cyc_names = cls.get_info()
+        samplerate, cyc_names, n_gaussian, range_mean, range_sd = cls.get_info()
 
         seqInfo = cls.get_all_seq()
 
         exception = {}
 
         # Block One:
-        for blockName,rcyc in zip(cyc_names,Rcyc):
+        for blockName in cyc_names:
             list_seq = list(seqInfo.seqs.keys())
             if blockName in exception.keys():
                 list_seq = np.setdiff1d(list_seq,exception[blockName])
@@ -148,29 +153,27 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
 
                 fileName = blockName+"_"+seqid
 
-                # FIRST the set of sounds with cycle of size Rcyc = 10
-                # We decide to work with sounds of constant size in the network case: 8
-                # nbRandreg = 20 #50
-                nbRegrand = 10 #50
-                nbRegDeviant = 5
+                sound_mat = np.array([])
+                sound_block = np.array([])
+                ref_noise = cls._RN(samplerate, n_gaussian, range_mean, range_sd)
+                last = -1
+                for i in range(seqInfo.nbN[seqid]+seqInfo.nbRN[seqid]+seqInfo.nbRefRN[seqid]):
+                    current = np.random.randint(0, 4)
+                    if last == 3:
+                        while current == 3:
+                            current = np.random.randint(0, 4)
+                    if current == 1:
+                        sound_mat = np.concatenate((sound_mat, cls._N(samplerate, n_gaussian, range_mean, range_sd)))
+                    elif current == 2:
+                        sound_mat = np.concatenate((sound_mat, cls._RN(samplerate, n_gaussian, range_mean, range_sd)))
+                    else:
+                        sound_mat = np.concatenate((sound_mat, ref_noise))
 
-                # sound_mat = [cls._RANDREG(freq,rcyc,seqInfo,seqid,vary_outer_sequence=vary_outer_sequence) for _ in range(nbRandreg)]
-                # sound_names = ["randreg_"+str(i) for i in range(nbRandreg)]
-                sound_mat = [cls._REGRAND(freq,rcyc,seqInfo,seqid,vary_outer_sequence=vary_outer_sequence,
-                                          number_out_motif =3) for _ in range(nbRegrand)]
-                sound_names = ["regrand_"+str(i) for i in range(nbRegrand)]
-                for i in range(nbRegDeviant):
-                    sound_mat += cls._REGDEVIANT(freq,rcyc,seqInfo,seqid,vary_outer_sequence=vary_outer_sequence,
-                                                 number_out_motif =3)
-                    sound_names += ["regdeviant_"+str(i)+"_"+str(switchid) for switchid in range(len(seqInfo.seqs_deviants_pos[seqid]))]
+                    sound_block = np.concatenate((sound_block, current))
+                    last = current
 
-                # sound_mat += [cls._CST(freq,rcyc,nb_Rcyc) for _ in range(15)]
-                # sound_names += ["cst_"+str(i) for i in range(15)]
-
-                sound_block = np.array([s[0] for s in sound_mat],dtype=int)
+                sound_names = ["exp_1"]
                 sound_names = np.array(sound_names)
-
-                sound_mat = np.stack([tones[sound_block[i,:],:].reshape(-1) for i in range(sound_block.shape[0])],axis=0)
 
                 os.makedirs(os.path.join(dirZarr, fileName),exist_ok=True)
                 zg = zr.open_group(os.path.join(dirZarr, fileName, "sounds.zarr"), mode="w")
@@ -186,11 +189,11 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
     @classmethod
     def generateWav2vec2Mask(cls,dirZarr,oneEvalPerEvent=True):
 
-        Rcyc,samplerate,duration_tone,consine_rmp_length,cyc_names = cls.get_info()
+        samplerate, cyc_names, n_gaussian, range_mean, range_sd = cls.get_info()
         seqInfo = cls.get_all_seq()
 
-        exception = {"block1":["LOT_repeat"]}  #{}
-        for blockName,rcyc in zip(cyc_names,Rcyc):
+        exception = {}
+        for blockName in cyc_names:
             list_seq = list(seqInfo.seqs.keys())
             if blockName in exception.keys():
                 list_seq = np.setdiff1d(list_seq, exception[blockName])
