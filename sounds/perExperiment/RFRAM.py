@@ -99,35 +99,59 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
         return samplerate, cyc_names, n_gaussian, range_mean, range_sd
 
     @classmethod
-    def _N(cls, samplerate, n_gaussian, range_mean, range_sd):
+    def _N(cls, samplerate : int, range_mean : list, range_sd : list) -> np.array:
+        """
+        Generate a gaussian sound.
+        :param samplerate: samplerate for the sound
+        :param n_gaussian: number of points
+        :param range_mean: range to choose the mean value from
+        :param range_sd: range to choose the deviation value from
+        :return:
+        """
 
         seqInfo = cls.get_all_seq()
 
+        """
+        I don't think the mean and deviation should change
+
         mean = np.random.uniform(range_mean[0], range_mean[1])
         stddev = np.random.uniform(range_sd[0], range_sd[1])
-
-        noise = np.random.normal(mean, stddev, (n_gaussian, samplerate))
-        noise = np.sum(noise, axis=0)
+        """
+        mean = 0
+        stddev = 1
+        noise = np.random.normal(mean, stddev,samplerate)
+        # noise = np.sum(noise, axis=0)
 
         blank = np.zeros((1, len(noise)))
-        repeated_noise = np.concatenate((noise, blank))
-
+        noise = np.append(noise, blank)
         return noise
 
     @classmethod
-    def _RN(cls, samplerate, n_gaussian, range_mean, range_sd):
+    def _RN(cls, samplerate : int, range_mean : list, range_sd : list):
+        """
+        Generate gaussian sound made of 2 times one shorter sound.
+        :param samplerate: samplerate for the sound
+        :param range_mean: range to choose the mean value from
+        :param range_sd: range to choose the deviation value from
+        :return:
+        """
 
         seqInfo = cls.get_all_seq()
 
+        """
+        I don't think the mean and deviation should change
+        
         mean = np.random.uniform(range_mean[0], range_mean[1])
         stddev = np.random.uniform(range_sd[0], range_sd[1])
-
-        noise = np.random.normal(mean, stddev, (n_gaussian, samplerate/2))
-        noise = np.sum(noise, axis=0)
-        repeated_noise = np.concatenate((noise, noise))
+        
+        """
+        mean = 0
+        stddev = 1
+        noise = np.random.normal(mean, stddev, samplerate//2)
+        repeated_noise = np.append(noise, noise)
 
         blank = np.zeros((1, len(repeated_noise)))
-        repeated_noise = np.concatenate((repeated_noise, blank))
+        repeated_noise = np.append(repeated_noise, blank)
 
         return repeated_noise
 
@@ -137,7 +161,12 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
 
     @classmethod
     def generateSounds(cls,dirWav: Union[str,pathlib.Path], dirZarr: Union[str,pathlib.Path]):
-
+        """
+        Generates a sound file corresponding the experiment.
+        :param dirWav: directory for the wav file
+        :param dirZarr: directory for the Zarr file (not used yet)
+        :return: None
+        """
         samplerate, cyc_names, n_gaussian, range_mean, range_sd = cls.get_info()
 
         seqInfo = cls.get_all_seq()
@@ -153,37 +182,46 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
 
                 fileName = blockName+"_"+seqid
 
-                sound_mat = np.array([])
+                sound_mat = np.zeros(2*samplerate)
                 sound_block = np.array([])
-                ref_noise = cls._RN(samplerate, n_gaussian, range_mean, range_sd)
+                ref_noise = cls._RN(samplerate, range_mean, range_sd)
                 last = -1
+                nb_each = {
+                    "N": 0,
+                    "RN": 0,
+                    "refRN": 0
+                }
+
                 for i in range(seqInfo.nbN[seqid]+seqInfo.nbRN[seqid]+seqInfo.nbRefRN[seqid]):
-                    current = np.random.randint(0, 4)
+                    current = np.random.randint(1, 4)
                     if last == 3:
                         while current == 3:
                             current = np.random.randint(0, 4)
-                    if current == 1:
-                        sound_mat = np.concatenate((sound_mat, cls._N(samplerate, n_gaussian, range_mean, range_sd)))
-                    elif current == 2:
-                        sound_mat = np.concatenate((sound_mat, cls._RN(samplerate, n_gaussian, range_mean, range_sd)))
-                    else:
+                    if current == 1 and nb_each["N"] < seqInfo.nbN[seqid]:
+                        sound_mat = np.concatenate((sound_mat, cls._N(samplerate, range_mean, range_sd)))
+                        nb_each["N"] += 1
+                    elif current == 2 and nb_each["RN"] < seqInfo.nbRN[seqid]:
+                        sound_mat = np.concatenate((sound_mat, cls._RN(samplerate, range_mean, range_sd)))
+                        nb_each["RN"] += 1
+                    elif nb_each["refRN"] < seqInfo.nbRefRN[seqid]:
                         sound_mat = np.concatenate((sound_mat, ref_noise))
+                        nb_each["refRN"] += 1
 
-                    sound_block = np.concatenate((sound_block, current))
+
+                    sound_block = np.append(sound_block, current)
                     last = current
-
+                print(sound_mat)
                 sound_names = ["exp_1"]
                 sound_names = np.array(sound_names)
-
+                """
                 os.makedirs(os.path.join(dirZarr, fileName),exist_ok=True)
                 zg = zr.open_group(os.path.join(dirZarr, fileName, "sounds.zarr"), mode="w")
                 zg.array("sound_mat", data=sound_mat, chunks=(1, None))
                 zg.array("sound_names", data=np.array([k + ".wav" for k in sound_names]), chunks=(None,))
                 zg.array("tones_sequences", data=sound_block, chunks=(None,))
-
-                os.makedirs(os.path.join(dirWav, fileName),exist_ok=True)
-                for sname,s in zip(sound_names,sound_mat):
-                    sf.write(os.path.join(dirWav,fileName,sname+".wav"),s,samplerate=samplerate)
+                """
+                os.makedirs(os.path.join(dirWav,fileName), exist_ok = True)
+                sf.write(os.path.join(dirWav,fileName,"exp1"+".wav"),sound_mat,samplerate=samplerate)
 
 
     @classmethod
