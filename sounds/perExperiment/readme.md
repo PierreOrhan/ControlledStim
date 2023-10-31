@@ -1,6 +1,9 @@
 Organisation of the code for the project.
 
 We want to generate huggingface dataset containing a set of sounds.
+The dataset will also contain additional information about the sounds 
+for the different experimental protocol and for the different neural networks.
+For example: masks over latent tokens (downsampled) for Wav2vec2
 
 Sounds can take the following formats:
 - Discrete stream:
