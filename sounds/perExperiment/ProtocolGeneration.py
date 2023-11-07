@@ -7,6 +7,29 @@ import zarr as zr
 from sounds.api import SoundGenerator
 import soundfile as sf
 
+list_sounds_name = ["gaussian_N", "gaussian_RN", "gaussian_RefRN", "bip_1", "bip_2"]
+samplerates_sound = {
+    "gaussian_N": 16000,
+    "gaussian_RN": 16000,
+    "gaussian_RefN": 16000,
+    "bip_1": 16000,
+    "bip_2": 16000,
+}
+durations_sound = {
+    "gaussian_N": 1000,
+    "gaussian_RN": 1000,
+    "gaussian_RefN": 1000,
+    "bip_1": 1000,
+    "bip_2": 1000,
+}
+consines_rmp_length = {
+    "gaussian_N": 5,
+    "gaussian_RN": 5,
+    "gaussian_RefN": 5,
+    "bip_1": 5,
+    "bip_2": 5,
+}
+
 class Sequence:
     name: str
     sounds: list[str]
@@ -16,10 +39,82 @@ class Sound:
     name: str
     sound: np.ndarray
     samplerate: int
+    duration: int
+
+    def __init__(self, name, samplerate, duration, consine_rmp_length, fs=None, sound=None):
+        self.name = name
+        self.sound = sound
+        self.samplerate = samplerate
+        self.duration = duration #ms
+
+        if sound is None:
+            if name == "gaussian_N":
+                n_samples = samplerate * duration
+                noise = np.random.normal(0, 1, n_samples)
+
+                # Applying hamming window: necessary??
+                # creating ramps
+                hanning_window = np.hanning(consine_rmp_length / 1000 * samplerate)
+                hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
+                # filtering tones with ramps:
+                noise[:hanning_window.shape[0]] = noise[:hanning_window.shape[0]] * hanning_window
+                noise[-hanning_window.shape[0]:] = noise[-hanning_window.shape[0]:] * hanning_window[::-1]
+
+                self.sound = noise
+
+            elif name[:10] == "gaussian_R":
+                n_samples = int(samplerate * duration / 2)
+                noise = np.random.normal(0, 1, n_samples)
+                r_noise = np.concatenate((noise, noise))
+
+                # Applying hamming window: necessary??
+                # creating ramps
+                hanning_window = np.hanning(consine_rmp_length / 1000 * samplerate)
+                hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
+                # filtering tones with ramps:
+                r_noise[:hanning_window.shape[0]] = r_noise[:hanning_window.shape[0]] * hanning_window
+                r_noise[-hanning_window.shape[0]:] = r_noise[-hanning_window.shape[0]:] * hanning_window[::-1]
+
+                self.sound = r_noise
+
+            elif name[:3] == "bip":
+                tone = np.sum(np.stack([librosa.tone(f, sr=samplerate, duration=duration / 1000) for f in fs], axis=0),axis=0)
+                # tone = librosa.tone(f, sr=samplerate, duration=duration_tone/1000)
+
+                # creating ramps
+                hanning_window = np.hanning(consine_rmp_length / 1000 * samplerate)
+                hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
+                # filtering tones with ramps:
+                tone[:hanning_window.shape[0]] = tone[:hanning_window.shape[0]] * hanning_window
+                tone[-hanning_window.shape[0]:] = tone[-hanning_window.shape[0]:] * hanning_window[::-1]
+
+                # we normalize, to see if this could help the network to perform better!
+                ## Normalization:
+                tone = tone / np.sqrt(np.sum(tone ** 2, axis=-1, keepdims=True))
+
+                self.sound = tone
+
+            else:
+                raise ValueError("'name' is not defined")
+
+
 
 class Sound_pool:
     name: str
-    sounds: dict[Sound]
+    sounds: dict[str, Sound]
+
+    def __init__(self, name, fs=np.logspace(np.log(222), np.log(2000), 20, base=np.exp(1)), sounds=None):
+        self.name = name
+        self.sounds = sounds
+
+        if sounds is None:
+            dict_sounds = {}
+            for key in list_sounds_name:
+                dict_sounds[key] = Sound(key, samplerates_sound[key], durations_sound[key], consines_rmp_length[key], fs)
+
+            self.sounds = dict_sounds
+
+
 
 class Combinator:
     name: str
