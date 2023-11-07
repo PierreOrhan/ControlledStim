@@ -67,11 +67,12 @@ Classes:
 
     Sound:
         name: str
+        sound: np.ndarray
+        sample_rate: int
 
     Sound_pool:
         name: str
-        sounds: List[tpl(np.ndarray,int)] 
-        # list of sounds and samplerate.
+        sounds: dict[Sound]
 
     Combinator:
         name: str
