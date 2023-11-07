@@ -50,8 +50,14 @@ def rfram_sequence() -> list[str]:
     refRN = "gaussian_RefRN"
 
     sequence = [N] * nbN + [RN] * nbRN + [refRN] * nbRefRN
-
     random.shuffle(sequence)
+
+    for i in range(1, len(sequence)):
+        if sequence[i] == refRN and sequence[i - 1] == refRN:
+            while sequence[i] == refRN:
+                j = random.randint(0, len(sequence) - 1)
+                if sequence[j] != refRN:
+                    sequence[i], sequence[j] = sequence[j], sequence[i]
 
     return sequence
 
