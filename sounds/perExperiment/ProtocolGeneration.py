@@ -63,7 +63,6 @@ sequence_name_to_sounds = {
     "RandReg_10": [],
     "RandReg_20": [],
 
-    "RFRAM": rfram_sequence(),
 }
 
 
@@ -75,7 +74,10 @@ class Sequence:
     def __init__(self, name: str, isi: float):
         self.name = name
         self.isi = isi
-        self.sounds = sequence_name_to_sounds[name]
+        if name == "RFRAM":
+            self.sounds = rfram_sequence()
+        else:
+            self.sounds = sequence_name_to_sounds[name]
 
 
 class Sound:
