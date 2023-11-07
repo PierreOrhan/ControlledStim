@@ -6,9 +6,9 @@ import librosa
 import zarr as zr
 from sounds.api import SoundGenerator
 import soundfile as sf
+import random
 
 
-list_sounds_name = ["gaussian_N", "gaussian_RN", "gaussian_RefRN", "bip_1", "bip_2"]
 samplerates_sound = {
     "gaussian_N": 16000,
     "gaussian_RN": 16000,
@@ -16,6 +16,9 @@ samplerates_sound = {
     "bip_1": 16000,
     "bip_2": 16000,
 }
+
+list_sounds_name = list(samplerates_sound)
+
 durations_sound = {
     "gaussian_N": 1000,
     "gaussian_RN": 1000,
@@ -38,30 +41,18 @@ def rfram_sequence() -> list[str]:
 
     :return: list[str]
     """
-    sequence = []
-    last = -1
-    nb_each = {
-        "N": 0,
-        "RN": 0,
-        "refRN": 0
-    }
+
     nbN = 50
     nbRN = 100
     nbRefRN = 50
-    for i in range(nbN + nbRN + nbRefRN):
-        current = np.random.randint(1, 4)
-        if last == 3:
-            while current == 3:
-                current = np.random.randint(0, 4)
-        if current == 1 and nb_each["N"] < nbN:
-            sequence.append("gaussian_N")
-            nb_each["N"] += 1
-        elif current == 2 and nb_each["RN"] < nbRN:
-            sequence.append("gaussian_RN")
-            nb_each["RN"] += 1
-        elif nb_each["refRN"] < nbRefRN:
-            sequence.append("gaussian_RefRN")
-            nb_each["refRN"] += 1
+    N = "gaussian_N"
+    RN = "gaussian_RN"
+    refRN = "gaussian_RefRN"
+
+    sequence = [N] * nbN + [RN] * nbRN + [refRN] * nbRefRN
+
+    random.shuffle(sequence)
+
     return sequence
 
 
