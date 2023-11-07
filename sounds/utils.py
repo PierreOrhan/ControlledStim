@@ -25,6 +25,12 @@ parsed_torch_version_base = version.parse(version.parse(torch.__version__).base_
 is_torch_less_than_1_8 = parsed_torch_version_base < version.parse("1.8.0")
 def get_input_lengths(input_lengths,conv_kernel,conv_stride):
 
+    # This function computes the temporal length of Wav2vec2's latent vector after downsampling by
+    # the feature extractor, i.e the set of convolutional layers.
+    # It takes as input conv_kernel and conv_stride, a list of the respective kernel siwe and stride of each
+    # convolutional layers. These can be obtained from the .conf file along with the huggingface model.
+
+
     def torch_int_div(tensor1,tensor2):
         if is_torch_less_than_1_8:
             return tensor1 // tensor2
