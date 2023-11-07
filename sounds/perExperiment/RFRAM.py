@@ -210,7 +210,6 @@ class RFRAM_structure(SoundGenerator,ElementMasking):
 
                     sound_block = np.append(sound_block, current)
                     last = current
-                print(sound_mat)
                 sound_names = ["exp_1"]
                 sound_names = np.array(sound_names)
                 """
