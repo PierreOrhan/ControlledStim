@@ -7,12 +7,12 @@ import zarr as zr
 from sounds.api import SoundGenerator
 import soundfile as sf
 import random
-
 import pandas as pd
 
 RFRAM_key = None
 test_dir = str(pathlib.Path(__file__).parent.parent.absolute() / "tests")
 data_dir = str(pathlib.Path(__file__).parent.parent.absolute() / "data")
+
 
 samplerates_sound = {
     "gaussian_N": 16000,
@@ -42,7 +42,7 @@ consines_rmp_length = {
     "silence": 5
 }
 
-from datasets import load_dataset, Audio
+from datasets import load_dataset, Audio, Dataset
 
 
 def rfram_sequence_exp1() -> list[str]:
@@ -93,14 +93,25 @@ sequence_name_to_sounds = {
     # "tree2":tree2,
 
     "LocalGlobal_Standard": ["bip_1", "bip_1", "bip_1", "bip_1"],
-    "LocalGlobal_Deviant": ["bip_1", "bip_1", "bip_1", "bip_2"],
+    "LocalGlobal_Deviant_1": ["bip_1", "bip_1", "bip_1", "bip_2"],
+    "LocalGlobal_Deviant_2": ["bip_1", "bip_1", "bip_1", "bip_2"],
     "LocalGlobal_Omission": ["bip_1", "bip_1", "bip_1", "silence"],
 
     "RandReg_5": [],
     "RandReg_8": [],
     "RandReg_10": [],
-    "RandReg_20": [],
+    "RandReg_20": []
+}
 
+protocol_name_to_sequences = {
+    "LocalGlobal_ssss": ["LocalGlobal_Standard", "LocalGlobal_Standard", "LocalGlobal_Standard", "LocalGlobal_Deviant_1"],
+    "LocalGlobal_sssd": ["LocalGlobal_Deviant_1", "LocalGlobal_Deviant_1", "LocalGlobal_Deviant_1", "LocalGlobal_Deviant_2"],
+    "LocalGlobal_sss_": ["LocalGlobal_Deviant_1", "LocalGlobal_Deviant_1", "LocalGlobal_Deviant_1", "LocalGlobal_Omission"],
+    "RandomRegular": [],
+    "SyllableStream": [],
+    "Habituation": [],
+    "TestRandom": [],
+    "TestDeviant": []
 }
 
 
@@ -132,7 +143,8 @@ class Sound:
 
         if sound is None:
             if name == "gaussian_N":
-                n_samples = int(samplerate * duration/1000)
+
+                n_samples = int(samplerate * duration / 1000)
                 noise = np.random.normal(0, 1, n_samples)
 
                 # Applying hamming window: necessary??
@@ -163,7 +175,10 @@ class Sound:
             elif name == "bip_1" or name == "bip_2":
                 # creating the tone with random distribution of frequency
                 dis = np.random.uniform(0, 1, fs.shape[0])
-                tone = np.transpose(np.transpose(np.stack([librosa.tone(f, sr=samplerate, duration=duration / 1000) for f in fs], axis=0)) @ np.transpose(dis))
+
+                tone = np.transpose(np.transpose(
+                    np.stack([librosa.tone(f, sr=samplerate, duration=duration / 1000) for f in fs],
+                             axis=0)) @ np.transpose(dis))
                 # tone = librosa.tone(f, sr=samplerate, duration=duration_tone/1000)
 
                 # creating ramps
@@ -180,6 +195,7 @@ class Sound:
                 self.sound = tone
 
             elif name == "silence":
+
                 silence = np.zeros(int(samplerate * duration/1000))
 
                 self.sound = silence
@@ -217,6 +233,7 @@ class Sound_pool:
         else:
             raise TypeError("unsupported operand type(s) for +: '{}' and '{}'".format(self.__class__, other.__class__))
 
+
     def add(self, sound : Sound):
         self.sounds[sound.name] = sound
 
@@ -224,6 +241,7 @@ class Combinator:
     name: str
     dirWav: str
     samplerate: int
+
 
     def __init__(self, name: str, samplerate: int, dirWav: str = data_dir):
         self.name = name
@@ -237,6 +255,7 @@ class Combinator:
         duration = []
         isi = []
         sound_info_path = []
+
         for seq in seq_list:
             sound_seq = []
             for sound in seq.sounds:
@@ -287,7 +306,26 @@ class Combinator:
         df.to_csv(os.path.join(self.dirWav, "sequences.csv"), index=False)
 
 
-
 class Protocol:
     name: str
     sequence_isi: float
+
+    def __init__(self, name: str, sequence_isi: float):
+        self.name = name
+        self.sequence_isi = sequence_isi
+
+    def create(self, soundseq_dataset_csv: str):
+        df = pd.read_csv(soundseq_dataset_csv)
+        ann_dict = {
+            "audio_data": [],
+            "sample_rate": [],
+            "label": []
+        }
+        for seq in protocol_name_to_sequences[self.name]:
+            data, sr = sf.read(df["name" == seq]["path"])
+            ann_dict["audio_data"].append(data)
+            ann_dict["sample_rate"].append(sr)
+            ann_dict["label"].append(seq)
+
+        ann_dataset = Dataset.from_dict(ann_dict)
+        return ann_dataset
