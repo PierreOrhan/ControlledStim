@@ -56,8 +56,15 @@ def rfram_sequence() -> list[str]:
         if sequence[i] == refRN and sequence[i - 1] == refRN:
             while sequence[i] == refRN:
                 j = random.randint(0, len(sequence) - 1)
-                if sequence[j] != refRN:
-                    sequence[i], sequence[j] = sequence[j], sequence[i]
+                if 0 < j < len(sequence)-1:
+                    if sequence[j] != refRN and sequence[j+1] != refRN and sequence[j-1] != refRN:
+                        sequence[i], sequence[j] = sequence[j], sequence[i]
+                elif j == 0:
+                    if sequence[j] != refRN and sequence[j+1] != refRN:
+                        sequence[i], sequence[j] = sequence[j], sequence[i]
+                else:
+                    if sequence[j] != refRN and sequence[j-1] != refRN:
+                        sequence[i], sequence[j] = sequence[j], sequence[i]
 
     return sequence
 
