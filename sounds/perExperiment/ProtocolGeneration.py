@@ -6,9 +6,9 @@ import librosa
 import zarr as zr
 from sounds.api import SoundGenerator
 import soundfile as sf
+import random
 
 
-list_sounds_name = ["gaussian_N", "gaussian_RN", "gaussian_RefRN", "bip_1", "bip_2"]
 samplerates_sound = {
     "gaussian_N": 16000,
     "gaussian_RN": 16000,
@@ -16,6 +16,9 @@ samplerates_sound = {
     "bip_1": 16000,
     "bip_2": 16000,
 }
+
+list_sounds_name = list(samplerates_sound)
+
 durations_sound = {
     "gaussian_N": 1000,
     "gaussian_RN": 1000,
@@ -33,35 +36,36 @@ consines_rmp_length = {
 
 from datasets import load_dataset, Audio
 
-def rfram_sequence() -> list[str]:
-    """Generates a correct RFRAM sequence.
+def rfram_sequence_exp1() -> list[str]:
+    """Generates a correct RFRAM_1 sequence.
 
     :return: list[str]
     """
-    sequence = []
-    last = -1
-    nb_each = {
-        "N": 0,
-        "RN": 0,
-        "refRN": 0
-    }
+
     nbN = 50
     nbRN = 100
     nbRefRN = 50
-    for i in range(nbN + nbRN + nbRefRN):
-        current = np.random.randint(1, 4)
-        if last == 3:
-            while current == 3:
-                current = np.random.randint(0, 4)
-        if current == 1 and nb_each["N"] < nbN:
-            sequence.append("gaussian_N")
-            nb_each["N"] += 1
-        elif current == 2 and nb_each["RN"] < nbRN:
-            sequence.append("gaussian_RN")
-            nb_each["RN"] += 1
-        elif nb_each["refRN"] < nbRefRN:
-            sequence.append("gaussian_RefRN")
-            nb_each["refRN"] += 1
+    N = "gaussian_N"
+    RN = "gaussian_RN"
+    refRN = "gaussian_RefRN"
+
+    sequence = [N] * nbN + [RN] * nbRN + [refRN] * nbRefRN
+    random.shuffle(sequence)
+
+    for i in range(1, len(sequence)):
+        if sequence[i] == refRN and sequence[i - 1] == refRN:
+            while sequence[i] == refRN:
+                j = random.randint(0, len(sequence) - 1)
+                if 0 < j < len(sequence)-1:
+                    if sequence[j] != refRN and sequence[j+1] != refRN and sequence[j-1] != refRN:
+                        sequence[i], sequence[j] = sequence[j], sequence[i]
+                elif j == 0:
+                    if sequence[j] != refRN and sequence[j+1] != refRN:
+                        sequence[i], sequence[j] = sequence[j], sequence[i]
+                else:
+                    if sequence[j] != refRN and sequence[j-1] != refRN:
+                        sequence[i], sequence[j] = sequence[j], sequence[i]
+
     return sequence
 
 
@@ -98,8 +102,8 @@ class Sequence:
     def __init__(self, name: str, isi: float):
         self.name = name
         self.isi = isi
-        if name == "RFRAM":
-            self.sounds = rfram_sequence()
+        if name == "RFRAM_1":
+            self.sounds = rfram_sequence_exp1()
         else:
             self.sounds = sequence_name_to_sounds[name]
 
@@ -131,7 +135,7 @@ class Sound:
 
                 self.sound = noise
 
-            elif name[:10] == "gaussian_R":
+            elif name == "gaussian_RN" or name == "gaussian_RefRN":
                 n_samples = int(samplerate * duration / 2)
                 noise = np.random.normal(0, 1, n_samples)
                 r_noise = np.concatenate((noise, noise))
@@ -146,7 +150,7 @@ class Sound:
 
                 self.sound = r_noise
 
-            elif name[:3] == "bip":
+            elif name == "bip_1" or name == "bip_2":
                 tone = np.sum(np.stack([librosa.tone(f, sr=samplerate, duration=duration / 1000) for f in fs], axis=0),axis=0)
                 # tone = librosa.tone(f, sr=samplerate, duration=duration_tone/1000)
 
@@ -163,6 +167,11 @@ class Sound:
 
                 self.sound = tone
 
+            elif name == "silence":
+                silence = np.zeros(samplerate*duration)
+
+                self.sound = silence
+
             else:
                 raise ValueError("'name' is not defined")
 
@@ -172,15 +181,21 @@ class Sound:
 class Sound_pool:
     name: str
     sounds: dict[str, Sound]
+    fs: np.ndarray
 
     def __init__(self, name, fs=np.logspace(np.log(222), np.log(2000), 20, base=np.exp(1)), sounds=None):
         self.name = name
         self.sounds = sounds
+        self.fs = fs
 
         if sounds is None:
             dict_sounds = {}
             for key in list_sounds_name:
-                dict_sounds[key] = Sound(key, samplerates_sound[key], durations_sound[key], consines_rmp_length[key], fs)
+                # gaussian_N and gaussian_RN have to be different each time
+                if key == "gaussian_N" or key == "gaussian_RN":
+                    dict_sounds[key] = None
+                else:
+                    dict_sounds[key] = Sound(key, samplerates_sound[key], durations_sound[key], consines_rmp_length[key], fs)
 
             self.sounds = dict_sounds
 
@@ -189,13 +204,28 @@ class Sound_pool:
 
 class Combinator:
     name: str
+    dirWav: str
+    samplerate: int
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, dirWav: str, samplerate: int):
         self.name = name
+        self.dirWav = dirWav
+        self.samplerate = samplerate
 
     def combine(self, seq_list: list[Sequence], sound_pool: Sound_pool):
         for seq in seq_list:
-            pass
+            sound_seq = []
+            for sound in seq.sounds:
+                # gaussian_N and gaussian_RN have to be different each time
+                if sound_pool.sounds[sound] is None:
+                    newSound = Sound(sound, samplerates_sound[sound], durations_sound[sound],
+                                     consines_rmp_length[sound], sound_pool.fs)
+                    sound_seq.append(newSound.sound)
+                else:
+                    sound_seq.append(sound_pool.sounds[sound].sound)
+
+            os.makedirs(os.path.join(self.dirWav, seq.name), exist_ok=True)
+            sf.write(os.path.join(self.dirWav, seq.name, seq.name + ".wav"), sound_seq, samplerate=self.samplerate)
 
 class Protocol:
     name: str
