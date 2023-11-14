@@ -8,7 +8,11 @@ from sounds.api import SoundGenerator
 import soundfile as sf
 import random
 
+import pandas as pd
+
 RFRAM_key = None
+test_dir = str(pathlib.Path(__file__).parent.parent.absolute() / "tests")
+data_dir = str(pathlib.Path(__file__).parent.parent.absolute() / "data")
 
 samplerates_sound = {
     "gaussian_N": 16000,
@@ -221,13 +225,18 @@ class Combinator:
     dirWav: str
     samplerate: int
 
-    def __init__(self, name: str, dirWav: str, samplerate: int):
+    def __init__(self, name: str, samplerate: int, dirWav: str = data_dir):
         self.name = name
-        self.dirWav = dirWav
+        self.dirWav = dirWav + "/" + name
         self.samplerate = samplerate
 
     def combine(self, seq_list: list[Sequence], sound_pool: Sound_pool):
-        """Combine the sounds in the sequence and generate a HuggingFace sound dataset."""
+        """Combine the sounds in the sequence and save the resulting sound in the directory dirWav."""
+        name = []
+        wav_path = []
+        duration = []
+        isi = []
+        sound_info_path = []
         for seq in seq_list:
             sound_seq = []
             for sound in seq.sounds:
@@ -242,12 +251,41 @@ class Combinator:
                 # concatenate the sounds
             sound_seq = np.concatenate(sound_seq)
 
-            os.makedirs(os.path.join(self.dirWav, seq.name), exist_ok=True)
-            sf.write(os.path.join(self.dirWav, seq.name, seq.name + ".wav"), sound_seq, samplerate=self.samplerate)
+            # save the sound
+            os.makedirs(self.dirWav, exist_ok=True)
+            sf.write(os.path.join(self.dirWav, seq.name + ".wav"), sound_seq, samplerate=self.samplerate)
 
-        # Generate the HuggingFace dataset with
-        dataset = load_dataset("/tests", data_files=os.path.join(self.dirWav, "*/*.wav"))
-        return dataset
+            # save the sound info
+            name.append(seq.name)
+            wav_path.append(str(os.path.join(self.dirWav, seq.name + ".wav")))
+            duration.append(len(sound_seq)/self.samplerate)
+            isi.append(seq.isi)
+            sound_info_path.append(os.path.join(self.dirWav, "sound_info", seq.name + ".csv"))
+
+            # generating a csv with the specific sounds info concerning the sequence
+            start = []
+            for i in range(len(seq.sounds)):
+                if i == 0:
+                    start.append(0)
+                else:
+                    start.append(start[i-1] + durations_sound[seq.sounds[i-1]]/1000 + seq.isi)
+            df_sound_info = pd.DataFrame()
+            df_sound_info["name"] = seq.sounds
+            df_sound_info["start"] = start
+            df_sound_info["duration"] = [durations_sound[sound]/1000 for sound in seq.sounds]
+
+            os.makedirs(os.path.join(self.dirWav, "sound_info"), exist_ok=True)
+            df_sound_info.to_csv(os.path.join(self.dirWav, "sound_info", seq.name + ".csv"), index=False)
+
+        # generating a csv with the sequence names and the corresponding soundfile paths
+        df = pd.DataFrame()
+        df["name"] = name
+        df["wav_path"] = wav_path
+        df["duration"] = duration
+        df["isi"] = isi
+        df["sound_info_path"] = sound_info_path
+        df.to_csv(os.path.join(self.dirWav, "sequences.csv"), index=False)
+
 
 
 class Protocol:
