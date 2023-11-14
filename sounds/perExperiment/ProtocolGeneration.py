@@ -78,6 +78,7 @@ sequence_name_to_sounds = {
     "LOT_complex": [],
     # "tree1":tree1,
     # "tree2":tree2,
+
     "LocalGlobal_Standard": ["bip_1", "bip_1", "bip_1", "bip_1"],
     "LocalGlobal_Deviant": ["bip_1", "bip_1", "bip_1", "bip_2"],
     "LocalGlobal_Omission": ["bip_1", "bip_1", "bip_1", "silence"],

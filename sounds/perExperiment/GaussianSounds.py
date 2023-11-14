@@ -33,4 +33,3 @@ fig, (ax1, ax2) = plt.subplots(1,2, sharey = True)
 ax1.specgram(noise_N)
 ax2.specgram(noise_RN)
 plt.show()
-
