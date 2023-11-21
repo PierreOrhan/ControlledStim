@@ -1,4 +1,5 @@
 import os.path
+import shutil
 from typing import Union
 import pathlib
 import numpy as np
@@ -300,6 +301,9 @@ class Combinator:
         isi = []
         sound_info_path = []
 
+        shutil.rmtree(self.dirWav, ignore_errors=True)
+        os.makedirs(self.dirWav, exist_ok=True)
+
         for seq in seq_list:
             sound_seq = []
             for sound in seq.sounds:
@@ -359,15 +363,14 @@ class Protocol:
         self.sequence_isi = sequence_isi
 
     def create(self, soundseq_dataset_csv: str):
-        df = pd.read_csv(soundseq_dataset_csv)
+        df = pd.read_csv(soundseq_dataset_csv, index_col=False)
         ann_dict = {
             "audio_data": [],
             "sample_rate": [],
             "label": []
         }
         for seq in protocol_name_to_sequences[self.name]:
-            data, sr = sf.read(df["name" == seq]["path"])
-            data += np.zeros(int(sr * self.sequence_isi))
+            data, sr = sf.read(df[df["name"] == seq]["wav_path"].values[0])
             ann_dict["audio_data"].append(data)
             ann_dict["sample_rate"].append(sr)
             ann_dict["label"].append(seq)
