@@ -1,4 +1,5 @@
 import os.path
+import shutil
 from typing import Union
 import pathlib
 import numpy as np
@@ -255,6 +256,9 @@ class Combinator:
         duration = []
         isi = []
         sound_info_path = []
+
+        shutil.rmtree(self.dirWav, ignore_errors=True)
+        os.makedirs(self.dirWav, exist_ok=True)
 
         for seq in seq_list:
             sound_seq = []
