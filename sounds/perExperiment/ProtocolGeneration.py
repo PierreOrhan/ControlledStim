@@ -319,14 +319,14 @@ class Protocol:
         self.sequence_isi = sequence_isi
 
     def create(self, soundseq_dataset_csv: str):
-        df = pd.read_csv(soundseq_dataset_csv)
+        df = pd.read_csv(soundseq_dataset_csv, index_col=False)
         ann_dict = {
             "audio_data": [],
             "sample_rate": [],
             "label": []
         }
         for seq in protocol_name_to_sequences[self.name]:
-            data, sr = sf.read(df["name" == seq]["path"])
+            data, sr = sf.read(df[df["name"] == seq]["wav_path"].values[0])
             ann_dict["audio_data"].append(data)
             ann_dict["sample_rate"].append(sr)
             ann_dict["label"].append(seq)
