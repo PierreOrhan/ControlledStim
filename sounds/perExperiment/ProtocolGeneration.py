@@ -22,11 +22,9 @@ samplerates_sound = {
     "gaussian_RefRN": 16000,
     "bip_": 16000,
     "silence": 16000,
-    "RefBip_": 16000,
-    "Bip": 16000
+    "Bip_Rand": 16000,
+    "Bip_Ref_": 16000
 }
-
-list_sounds_name = list(samplerates_sound)
 
 durations_sound = {
     "gaussian_N": 1000,
@@ -34,8 +32,8 @@ durations_sound = {
     "gaussian_RefRN": 1000,
     "bip_": 1000,
     "silence": 1000,
-    "RefBip_": 50,
-    "RandBip": 50
+    "Bip_Rand": 50,
+    "Bip_Ref_": 50
 }
 consines_rmp_length = {
     "gaussian_N": 5,
@@ -43,21 +41,21 @@ consines_rmp_length = {
     "gaussian_RefRN": 5,
     "bip_": 5,
     "silence": 5,
-    "RefBip_": 5,
-    "RandBip": 5
+    "Bip_Rand": 5,
+    "Bip_Ref_": 5
 }
 
 from datasets import load_dataset, Audio, Dataset
 
 
 def rand(nb_elements: int) -> list[str]:
-    sequence = nb_elements*["RandBip"]
+    sequence = nb_elements*["Bip_Rand"]
     return sequence
 
 def reg(nb_cyc: int, Rcyc:int) -> list[str]:
     sequence = []
     for i in range(Rcyc):
-        sequence.append("RefBip_"+str(i+1))
+        sequence.append("Bip_Ref_"+str(i+1))
     sequence *= nb_cyc
     return sequence
 
@@ -210,7 +208,7 @@ class Sound:
 
                 self.sound = tone
 
-            elif name[0:7] == "RefBip_" or name == "RandBip":
+            elif name[0:8] == "Bip_Ref_" or name == "Bip_Rand":
                 # creating the tone with random distribution of frequency
                 dis = np.random.uniform(0, 1, fs.shape[0])
 
@@ -253,24 +251,9 @@ class Sound_pool:
         self.sounds = sounds
         self.fs = fs
 
-        if sounds is None:
-            dict_sounds = {}
-            for key in list_sounds_name:
-                if key in dict_sounds.keys():
-                    continue
-                # gaussian_N and gaussian_RN have to be different each time
-                elif key == "gaussian_N" or key == "gaussian_RN":
-                    dict_sounds[key] = RFRAM_key
-                elif key == "RandBip":
-                    dict_sounds[key] = RandBip_key
-                elif key[0:4] == "bip_":
-                    dict_sounds[key] = Sound(key, samplerates_sound[key[0:4]], durations_sound[key[0:4]],
-                                             consines_rmp_length[key[0:4]], fs)
-                else:
-                    dict_sounds[key] = Sound(key, samplerates_sound[key], durations_sound[key],
-                                             consines_rmp_length[key], fs)
+        if sounds == None:
+            self.sounds = {}
 
-            self.sounds = dict_sounds
 
     def __add__(self, other):
         if isinstance(other, Sound_pool):
@@ -281,6 +264,26 @@ class Sound_pool:
 
     def add(self, sound : Sound):
         self.sounds[sound.name] = sound
+
+    def addSequence(self, seq: Sequence):
+        for key in seq.sounds:
+            if key in self.sounds.keys():
+                continue
+            # gaussian_N and gaussian_RN have to be different each time
+            elif key == "gaussian_N" or key == "gaussian_RN":
+                self.sounds[key] = RFRAM_key
+            elif key == "Bip_Rand":
+                self.sounds[key] = Bip_Rand_key
+            elif key[0:4] == "bip_":
+                self.sounds[key] = Sound(key, samplerates_sound[key[0:4]], durations_sound[key[0:4]],
+                                         consines_rmp_length[key[0:4]], self.fs)
+            elif key[0:8] == "Bip_Ref_":
+                self.sounds[key] = Sound(key, samplerates_sound[key[0:8]], durations_sound[key[0:8]],
+                                         consines_rmp_length[key[0:8]], self.fs)
+            else:
+                self.sounds[key] = Sound(key, samplerates_sound[key], durations_sound[key],
+                                         consines_rmp_length[key], self.fs)
+
 
 class Combinator:
     name: str
@@ -308,6 +311,7 @@ class Combinator:
             sound_seq = []
             for sound in seq.sounds:
                 # gaussian_N and gaussian_RN have to be different each time
+                print(sound)
                 if sound_pool.sounds[sound] == RFRAM_key or sound_pool.sounds[sound] == Bip_Rand_key:
                     newSound = Sound(sound, samplerates_sound[sound], durations_sound[sound],
                                      consines_rmp_length[sound], sound_pool.fs)
@@ -335,11 +339,26 @@ class Combinator:
                 if i == 0:
                     start.append(0)
                 else:
-                    start.append(start[i-1] + durations_sound[seq.sounds[i-1]]/1000 + seq.isi)
+                    if seq.sounds[i-1][0:4] == "bip_":
+                        ds = durations_sound["bip_"]/1000
+                    elif seq.sounds[i-1][0:8] == "Bip_Ref_":
+                        ds = durations_sound["Bip_Ref_"]/1000
+                    else:
+                        ds = durations_sound[seq.sounds[i-1]]/1000
+                    start.append(start[i-1] + ds + seq.isi)
             df_sound_info = pd.DataFrame()
             df_sound_info["name"] = seq.sounds
             df_sound_info["start"] = start
-            df_sound_info["duration"] = [durations_sound[sound]/1000 for sound in seq.sounds]
+            durations = []
+            for sound in seq.sounds:
+                if sound[0:4] == "bip_":
+                    ds = durations_sound["bip_"] / 1000
+                elif sound[0:8] == "Bip_Ref_":
+                    ds = durations_sound["Bip_Ref_"] / 1000
+                else:
+                    ds = durations_sound[sound] / 1000
+                durations.append(ds)
+            df_sound_info["duration"] = durations
 
             os.makedirs(os.path.join(self.dirWav, "sound_info"), exist_ok=True)
             df_sound_info.to_csv(os.path.join(self.dirWav, "sound_info", seq.name + ".csv"), index=False)
