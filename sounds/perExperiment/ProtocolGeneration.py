@@ -10,6 +10,7 @@ import random
 import pandas as pd
 
 RFRAM_key = None
+Bip_Rand_key = None
 test_dir = str(pathlib.Path(__file__).parent.parent.absolute() / "tests")
 data_dir = str(pathlib.Path(__file__).parent.parent.absolute() / "data")
 
@@ -18,9 +19,10 @@ samplerates_sound = {
     "gaussian_N": 16000,
     "gaussian_RN": 16000,
     "gaussian_RefRN": 16000,
-    "bip_1": 16000,
-    "bip_2": 16000,
-    "silence": 16000
+    "bip_": 16000,
+    "silence": 16000,
+    "RefBip_": 16000,
+    "Bip": 16000
 }
 
 list_sounds_name = list(samplerates_sound)
@@ -29,21 +31,34 @@ durations_sound = {
     "gaussian_N": 1000,
     "gaussian_RN": 1000,
     "gaussian_RefRN": 1000,
-    "bip_1": 1000,
-    "bip_2": 1000,
-    "silence": 1000
+    "bip_": 1000,
+    "silence": 1000,
+    "RefBip_": 50,
+    "RandBip": 50
 }
 consines_rmp_length = {
     "gaussian_N": 5,
     "gaussian_RN": 5,
     "gaussian_RefRN": 5,
-    "bip_1": 5,
-    "bip_2": 5,
-    "silence": 5
+    "bip_": 5,
+    "silence": 5,
+    "RefBip_": 5,
+    "RandBip": 5
 }
 
 from datasets import load_dataset, Audio, Dataset
 
+
+def rand(nb_elements: int) -> list[str]:
+    sequence = nb_elements*["RandBip"]
+    return sequence
+
+def reg(nb_cyc: int, Rcyc:int) -> list[str]:
+    sequence = []
+    for i in range(Rcyc):
+        sequence.append("RefBip_"+str(i+1))
+    sequence *= nb_cyc
+    return sequence
 
 def rfram_sequence_exp1() -> list[str]:
     """Generates a correct RFRAM_1 sequence.
@@ -94,7 +109,7 @@ sequence_name_to_sounds = {
 
     "LocalGlobal_Standard": ["bip_1", "bip_1", "bip_1", "bip_1"],
     "LocalGlobal_Deviant_1": ["bip_1", "bip_1", "bip_1", "bip_2"],
-    "LocalGlobal_Deviant_2": ["bip_1", "bip_1", "bip_1", "bip_2"],
+    "LocalGlobal_Deviant_2": ["bip_1", "bip_1", "bip_1", "bip_3"],
     "LocalGlobal_Omission": ["bip_1", "bip_1", "bip_1", "silence"],
 
     "RandReg_5": [],
@@ -147,13 +162,13 @@ class Sound:
                 n_samples = int(samplerate * duration / 1000)
                 noise = np.random.normal(0, 1, n_samples)
 
-                # Applying hamming window: necessary??
-                # creating ramps
-                hanning_window = np.hanning(consine_rmp_length / 1000 * samplerate)
-                hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
-                # filtering tones with ramps:
-                noise[:hanning_window.shape[0]] = noise[:hanning_window.shape[0]] * hanning_window
-                noise[-hanning_window.shape[0]:] = noise[-hanning_window.shape[0]:] * hanning_window[::-1]
+                # # Applying hamming window: necessary??
+                # # creating ramps
+                # hanning_window = np.hanning(consine_rmp_length / 1000 * samplerate)
+                # hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
+                # # filtering tones with ramps:
+                # noise[:hanning_window.shape[0]] = noise[:hanning_window.shape[0]] * hanning_window
+                # noise[-hanning_window.shape[0]:] = noise[-hanning_window.shape[0]:] * hanning_window[::-1]
 
                 self.sound = noise
 
@@ -162,17 +177,39 @@ class Sound:
                 noise = np.random.normal(0, 1, n_samples)
                 r_noise = np.concatenate((noise, noise))
 
-                # Applying hamming window: necessary??
+                # # Applying hamming window: necessary??
+                # # creating ramps
+                # hanning_window = np.hanning(consine_rmp_length / 1000 * samplerate)
+                # hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
+                # # filtering tones with ramps:
+                # r_noise[:hanning_window.shape[0]] = r_noise[:hanning_window.shape[0]] * hanning_window
+                # r_noise[-hanning_window.shape[0]:] = r_noise[-hanning_window.shape[0]:] * hanning_window[::-1]
+
+                self.sound = r_noise
+
+            elif name[0:4] == "bip_":
+                # creating the tone with random distribution of frequency
+                dis = np.random.uniform(0, 1, fs.shape[0])
+
+                tone = np.transpose(np.transpose(
+                    np.stack([librosa.tone(f, sr=samplerate, duration=duration / 1000) for f in fs],
+                             axis=0)) @ np.transpose(dis))
+                # tone = librosa.tone(f, sr=samplerate, duration=duration_tone/1000)
+
                 # creating ramps
                 hanning_window = np.hanning(consine_rmp_length / 1000 * samplerate)
                 hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
                 # filtering tones with ramps:
-                r_noise[:hanning_window.shape[0]] = r_noise[:hanning_window.shape[0]] * hanning_window
-                r_noise[-hanning_window.shape[0]:] = r_noise[-hanning_window.shape[0]:] * hanning_window[::-1]
+                tone[:hanning_window.shape[0]] = tone[:hanning_window.shape[0]] * hanning_window
+                tone[-hanning_window.shape[0]:] = tone[-hanning_window.shape[0]:] * hanning_window[::-1]
 
-                self.sound = r_noise
+                # we normalize, to see if this could help the network to perform better!
+                ## Normalization:
+                tone = tone / np.sqrt(np.sum(tone ** 2, axis=-1, keepdims=True))
 
-            elif name == "bip_1" or name == "bip_2":
+                self.sound = tone
+
+            elif name[0:7] == "RefBip_" or name == "RandBip":
                 # creating the tone with random distribution of frequency
                 dis = np.random.uniform(0, 1, fs.shape[0])
 
@@ -218,9 +255,16 @@ class Sound_pool:
         if sounds is None:
             dict_sounds = {}
             for key in list_sounds_name:
+                if key in dict_sounds.keys():
+                    continue
                 # gaussian_N and gaussian_RN have to be different each time
-                if key == "gaussian_N" or key == "gaussian_RN":
+                elif key == "gaussian_N" or key == "gaussian_RN":
                     dict_sounds[key] = RFRAM_key
+                elif key == "RandBip":
+                    dict_sounds[key] = RandBip_key
+                elif key[0:4] == "bip_":
+                    dict_sounds[key] = Sound(key, samplerates_sound[key[0:4]], durations_sound[key[0:4]],
+                                             consines_rmp_length[key[0:4]], fs)
                 else:
                     dict_sounds[key] = Sound(key, samplerates_sound[key], durations_sound[key],
                                              consines_rmp_length[key], fs)
@@ -260,7 +304,7 @@ class Combinator:
             sound_seq = []
             for sound in seq.sounds:
                 # gaussian_N and gaussian_RN have to be different each time
-                if sound_pool.sounds[sound] == RFRAM_key:
+                if sound_pool.sounds[sound] == RFRAM_key or sound_pool.sounds[sound] == Bip_Rand_key:
                     newSound = Sound(sound, samplerates_sound[sound], durations_sound[sound],
                                      consines_rmp_length[sound], sound_pool.fs)
                     sound_seq.append(newSound.sound)
@@ -323,6 +367,7 @@ class Protocol:
         }
         for seq in protocol_name_to_sequences[self.name]:
             data, sr = sf.read(df["name" == seq]["path"])
+            data += np.zeros(int(sr * self.sequence_isi))
             ann_dict["audio_data"].append(data)
             ann_dict["sample_rate"].append(sr)
             ann_dict["label"].append(seq)
