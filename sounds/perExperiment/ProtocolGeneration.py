@@ -293,7 +293,7 @@ class Combinator:
 
     def __init__(self, name: str, samplerate: int, dirWav: str = data_dir):
         self.name = name
-        self.dirWav = dirWav + "/" + name
+        self.dirWav = str(pathlib.Path(dirWav) / name)
         self.samplerate = samplerate
 
     def combine(self, seq_list: list[Sequence], sound_pool: Sound_pool):
