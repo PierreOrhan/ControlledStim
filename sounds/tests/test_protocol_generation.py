@@ -19,7 +19,7 @@ def test_protocol_generation():
     comb.combine([seq1,seq2,seq3,seq4,seq5], soundpool)
 
     protocol_1 = PG.Protocol("LocalGlobal_sssd", 0.5)
-    ann_dataset_1 = protocol_1.create(data_dir  +"\\"+ comb.name + "\sequences.csv")
+    ann_dataset_1 = protocol_1.create(str(pathlib.Path(data_dir) / comb.name / pathlib.Path("sequences.csv")))
 
     print(ann_dataset_1)
     return True
