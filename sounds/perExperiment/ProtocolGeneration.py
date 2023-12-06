@@ -311,7 +311,6 @@ class Combinator:
             sound_seq = []
             for sound in seq.sounds:
                 # gaussian_N and gaussian_RN have to be different each time
-                print(sound)
                 if sound_pool.sounds[sound] == RFRAM_key or sound_pool.sounds[sound] == Bip_Rand_key:
                     newSound = Sound(sound, samplerates_sound[sound], durations_sound[sound],
                                      consines_rmp_length[sound], sound_pool.fs)
