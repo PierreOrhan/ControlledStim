@@ -27,72 +27,65 @@ class ElementMasking:
 
         num_negative_samples = 100  # Number of negative samples for contrastive learning
 
+        dataset = {"mask_time_indices": [],
+                   "sampled_negative_indices": [],
+                   "latent_time_reduction_blocks": []
+                   }
         # Load the sequence data set
         sequences = pd.read_csv(sequence_data_set_dir + "/sequences.csv")
-        time = 0
-        complete_tone_itv = []
-        complete_latentblock_itv = []
-        max_latent_length = 0
-        max_sound_per_sequence = 0
         for seq in range(sequences.shape[0]):
             sequence = sequences.iloc[seq, :]
             sequence_info = pd.read_csv(sequence["sound_info_path"])
-            max_sound_per_sequence = max(max_sound_per_sequence, sequence_info.shape[0])
+
             sound_mat = sf.read(sequence["wav_path"])
 
             # Get the number of latent samples
             latent_length = get_input_lengths(len(sound_mat[0]), wav2vec2_params["conv_kernel"],
                                               wav2vec2_params["conv_stride"])
-            print(latent_length)
-            max_latent_length = max(max_latent_length, latent_length)
 
             # define the intervals of each tone in temporal space
-            tone_start = sequence_info["start"] + time
+            tone_start = sequence_info["start"]
             tone_duration = sequence_info["duration"]
             tone_end = tone_start + tone_duration
 
             # define the intervals of each tone in latent space
-            latentblock_start = np.arange(16000*time, wav2vec2_stride * latent_length, step=wav2vec2_stride)
+            latentblock_start = np.arange(0, wav2vec2_stride * latent_length, step=wav2vec2_stride)
             latentblock_end = latentblock_start + wav2vec2_receptiveField
-            complete_latentblock_itv += [pd.Interval(s, e, closed="left") for s, e in
-                                         zip(latentblock_start, latentblock_end)]
+            latentblock_itv = [pd.Interval(s, e, closed="left") for s, e in
+                               zip(latentblock_start, latentblock_end)]
             toneStart_sample = np.array(tone_start * 16000, dtype=int)
             toneEnd_sample = np.array(tone_end * 16000, dtype=int)
-            complete_tone_itv += [pd.Interval(s, e, closed="left") for s, e in zip(toneStart_sample, toneEnd_sample)]
-            time += sequence["duration"]
+            tone_itv = [pd.Interval(s, e, closed="left") for s, e in zip(toneStart_sample, toneEnd_sample)]
 
-        # For all tones, find the blocks with which they overlap
-        tone_in_block: np.ndarray[bool] = np.array(
-            [[ti.overlaps(lti) for lti in complete_latentblock_itv] for ti in complete_tone_itv])
+            # For all tones, find the blocks with which they overlap
+            tone_in_block: np.ndarray[bool] = np.array(
+                [[ti.overlaps(lti) for lti in latentblock_itv] for ti in tone_itv])
 
-        block_inside_tone = np.array(
-            [[ti.left <= lti.left and ti.right >= lti.right for lti in complete_latentblock_itv] for ti in
-             complete_tone_itv])
+            block_inside_tone = np.array(
+                [[ti.left <= lti.left and ti.right >= lti.right for lti in latentblock_itv] for ti in
+                 tone_itv])
 
-        assert np.all(np.any(block_inside_tone, axis=-1))
+            silence_start = np.array(16000 * tone_end, dtype=int)
+            silence_end = np.array(16000 * (tone_end + sequences["isi"][0]), dtype=int)
+            silence_itv = [pd.Interval(s, e, closed="left") for s, e in zip(silence_start, silence_end)]
+            block_inside_silence: np.ndarray[bool] = np.array(
+                [[ti.left <= lti.left and ti.right >= lti.right for lti in latentblock_itv] for ti in silence_itv])
 
-        # Blocks that are fully contained in the tone
-        latent_time_reduction_blocks = np.stack([block_inside_tone for _ in range(sequences.shape[0])], axis=0)
+            assert np.all(np.any(block_inside_tone, axis=-1))
 
-        ## stack: we have the same structure for all the sounds here (one type of sequence), so the
-        # focus of the loss will be on the same latent.
+            # Blocks that are fully contained in the tone
+            latent_time_reduction_blocks = np.stack([block_inside_tone for _ in range(sequence_info.shape[0])], axis=0)
 
-        mask_time_indices = np.zeros((max_sound_per_sequence, max_latent_length), dtype=bool)
-        sampled_negative_indices = np.zeros((max_sound_per_sequence, max_latent_length,
-                                             num_negative_samples), dtype=int)
+            ## stack: we have the same structure for all the sounds here (one type of sequence), so the
+            # focus of the loss will be on the same latent.
 
-        all_tones = []
-        for seq_path in sequences["wav_path"]:
-            seq = pd.read_csv(seq_path)
-            all_tones += [seq["name"]]
-        all_tones = np.array(all_tones)
+            mask_time_indices = np.zeros((sequence_info.shape[0], latent_length), dtype=bool)
+            sampled_negative_indices = np.zeros((sequence_info.shape[0], latent_length, num_negative_samples),
+                                                dtype=int)
 
-        id_seq = 0
-        for seq_path in sequences["wav_path"]:
-            seq = pd.read_csv(seq_path)
-            toneType = seq["name"].to_numpy()
+            toneType = sequence_info["name"].to_numpy()
             negative_dic = {}
-            for tt in np.unique(all_tones):
+            for tt in np.unique(sequence_info["name"]):
                 is_same_tone = np.array([tt == t for t in toneType])
                 ok_block = np.any(tone_in_block[np.logical_not(is_same_tone)], axis=0) * np.all(
                     np.logical_not(tone_in_block[is_same_tone]), axis=0)
@@ -104,23 +97,25 @@ class ElementMasking:
                     try:
                         id_ok = np.random.choice(np.where(ok_block)[0], 100, replace=True)
                     except:
-                        raise Exception("")
+                        print("we authorize using silence as negatives")
+                        ok_block = np.any(block_inside_silence)
+                        id_ok = np.random.choice(np.where(ok_block)[0], num_negative_samples, replace=True)
                 negative_dic[tt] = id_ok
 
             negative_masks = []
             for toneblock, tt in zip(tone_in_block, toneType):
-                negative_mask = np.zeros((max_latent_length, num_negative_samples), dtype=int)
+                negative_mask = np.zeros((latent_length, num_negative_samples), dtype=int)
                 for i in np.where(toneblock)[0]:
                     negative_mask[i, :] = negative_dic[tt]
                 negative_masks += [negative_mask]
 
             mat_negative_mask = np.stack(negative_masks, axis=0)
 
-            mask_time_indices[id_seq, :, :] = tone_in_block
-            sampled_negative_indices[id_seq, :, :, :] = mat_negative_mask
-            id_seq += 1
+            mask_time_indices[:, :] = tone_in_block
+            sampled_negative_indices[:, :, :] = mat_negative_mask
 
-        dataset = datasets.Dataset.from_dict({"mask_time_indices": mask_time_indices,
-                                              "sampled_negative_indices": sampled_negative_indices
-                                              })
-        return dataset
+            dataset["mask_time_indices"] += [mask_time_indices]
+            dataset["sampled_negative_indices"] += [sampled_negative_indices]
+            dataset["latent_time_reduction_blocks"] += [latent_time_reduction_blocks]
+
+        return datasets.Dataset.from_dict(dataset)
