@@ -300,10 +300,11 @@ class Combinator:
         """Combine the sounds in the sequence and save the resulting sound in the directory dirWav."""
         name = []
         wav_path = []
+        mask_info_path = []
         duration = []
         isi = []
         sound_info_path = []
-
+        number_element = []
         shutil.rmtree(self.dirWav, ignore_errors=True)
         os.makedirs(self.dirWav, exist_ok=True)
 
@@ -328,10 +329,11 @@ class Combinator:
             # save the sound info
             name.append(seq.name)
             wav_path.append(str(os.path.join(self.dirWav, seq.name + ".wav")))
+            mask_info_path.append(str(os.path.join(self.dirWav, seq.name + ".masks")))
             duration.append(len(sound_seq)/self.samplerate)
             isi.append(seq.isi)
             sound_info_path.append(os.path.join(self.dirWav, "sound_info", seq.name + ".csv"))
-
+            number_element.append(len(seq.sounds))
             # generating a csv with the specific sounds info concerning the sequence
             start = []
             for i in range(len(seq.sounds)):
@@ -366,9 +368,12 @@ class Combinator:
         df = pd.DataFrame()
         df["name"] = name
         df["wav_path"] = wav_path
+        df["mask_info_path"] = mask_info_path
         df["duration"] = duration
         df["isi"] = isi
         df["sound_info_path"] = sound_info_path
+        df["number_element"] = number_element
+
         df.to_csv(os.path.join(self.dirWav, "sequences.csv"), index=False)
 
 
