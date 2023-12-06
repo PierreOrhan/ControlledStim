@@ -304,7 +304,7 @@ class Combinator:
         duration = []
         isi = []
         sound_info_path = []
-
+        number_element = []
         shutil.rmtree(self.dirWav, ignore_errors=True)
         os.makedirs(self.dirWav, exist_ok=True)
 
@@ -333,7 +333,7 @@ class Combinator:
             duration.append(len(sound_seq)/self.samplerate)
             isi.append(seq.isi)
             sound_info_path.append(os.path.join(self.dirWav, "sound_info", seq.name + ".csv"))
-
+            number_element.append(len(seq.sounds))
             # generating a csv with the specific sounds info concerning the sequence
             start = []
             for i in range(len(seq.sounds)):
@@ -372,6 +372,7 @@ class Combinator:
         df["duration"] = duration
         df["isi"] = isi
         df["sound_info_path"] = sound_info_path
+        df["number_element"] = number_element
 
         df.to_csv(os.path.join(self.dirWav, "sequences.csv"), index=False)
 
