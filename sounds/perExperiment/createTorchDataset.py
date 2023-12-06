@@ -12,12 +12,11 @@ def load_ANNdataset_withMask(dataset_dir : Path):
         for shard in shards:
             sequence = sequences.iloc[shard, :]
             sd,sr = sf.read(sequence["wav_path"])
-            zg = zr.open_group(sequence["mask_info_path"])
+            zg = zr.open_group(sequence["mask_info_path"],mode="r")
             for element_id in range(zg["mask_time_indices"].shape[0]):
                 datapoint = {"input_values":sd,
                              "mask_time_indices":zg["mask_time_indices"][element_id,:],
-                             "sampled_negative_indices":zg["sampled_negative_indices"][element_id,:],
-                             "latent_attention_mask" : zg["latent_attention_mask"][element_id,:]}
+                             "sampled_negative_indices":zg["sampled_negative_indices"][element_id,:]}
                 yield datapoint
 
     shards = np.arange(sequences.shape[0])
@@ -26,3 +25,4 @@ def load_ANNdataset_withMask(dataset_dir : Path):
     # ---> Transforms to a TorchIterableDataset which has the attribute len and can be used
     # in a DataLoader (i.e combined with a collator!!)
     ds.info.dataset_size = np.sum(sequences["number_element"])
+    return ds
