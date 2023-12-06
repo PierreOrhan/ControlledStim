@@ -4,11 +4,13 @@ from sounds.utils import get_input_lengths
 from pandas import Interval
 import numpy as np
 import tqdm
-class ElementMasking():
+
+
+class ElementMasking:
     @classmethod
-    def _mask_and_latent(cls,dirZarr,fileName,duration_tone,oneEvalPerEvent=True,duration_silence = 0):
-        ## The tone structure is assumed to be the same, but the negative indices
-        # are sampled acorrding to the tone sequence.
+    def _mask_and_latent(cls, dirZarr, fileName, duration_tone, oneEvalPerEvent=True, duration_silence=0):
+        # The tone structure is assumed to be the same, but the negative indices
+        # are sampled according to the tone sequence.
 
         wav2vec2_receptiveField = 400  # in number of input sample that are taken into account in a latent sample
         wav2vec2_stride = 320  # Stride between each latent sample
@@ -23,8 +25,9 @@ class ElementMasking():
         latent_length = get_input_lengths(sound_mat.shape[-1], wav2vec2_params["conv_kernel"],
                                           wav2vec2_params["conv_stride"]).item()
 
-        toneStart = np.array(((duration_tone+duration_silence) / 1000) * np.arange(tones_seq.shape[-1]), dtype=float)
-        toneEnd = np.array(((duration_tone+duration_silence) / 1000) * (np.arange(tones_seq.shape[-1]) + 1) - (duration_silence/1000), dtype=float)
+        toneStart = np.array(((duration_tone + duration_silence) / 1000) * np.arange(tones_seq.shape[-1]), dtype=float)
+        toneEnd = np.array(((duration_tone + duration_silence) / 1000) * (np.arange(tones_seq.shape[-1]) + 1) - (
+                duration_silence / 1000), dtype=float)
 
         ### AFTER HERE: added.
         latentblock_start = np.arange(0, wav2vec2_stride * latent_length, step=wav2vec2_stride)
@@ -50,15 +53,15 @@ class ElementMasking():
                       chunks=(1, None, None), dtype=bool)
             if oneEvalPerEvent:
                 zg.create("sampled_negative_indices",
-                          shape=(tones_seq.shape[0],tones_seq.shape[1], latent_length, num_negatives),
-                          chunks=(1,None,None, None), dtype=int)
+                          shape=(tones_seq.shape[0], tones_seq.shape[1], latent_length, num_negatives),
+                          chunks=(1, None, None, None), dtype=int)
             else:
                 zg.create("sampled_negative_indices",
                           shape=(tones_seq.shape[0], latent_length, num_negatives),
                           chunks=(1, None, None), dtype=int)
             # zg.array("latent_time_reduction", data=(tones_seq.shape[0],tones_seq.shape[1],latent_length),
             #          chunks=(1, None, None),dtype=bool)
-            zg.array("latent_time_reduction", data=ltrs,chunks=(1, None, None))
+            zg.array("latent_time_reduction", data=ltrs, chunks=(1, None, None))
 
         for id_sound, toneType in tqdm.tqdm(enumerate(tones_seq)):
             negative_dic = {}
@@ -84,7 +87,7 @@ class ElementMasking():
                     for i in np.where(toneblock)[0]:
                         negative_mask[i, :] = negative_dic[tt]
                     negative_masks += [negative_mask]
-                negative_mask = np.stack(negative_masks,axis=0)
+                negative_mask = np.stack(negative_masks, axis=0)
             else:
                 negative_mask = np.zeros((latent_length, num_negatives), dtype=int)
                 for toneblock, tt in zip(tone_in_block, toneType):
@@ -93,11 +96,10 @@ class ElementMasking():
             zg["mask_time_indices"][id_sound, ...] = tone_in_block
             zg["sampled_negative_indices"][id_sound, ...] = negative_mask
 
-
     @classmethod
-    def _mask_and_latent_PerSound(cls,dirZarr,fileName,oneEvalPerEvent=True):
+    def _mask_and_latent_PerSound(cls, dirZarr, fileName, oneEvalPerEvent=True):
 
-        zgEvents = zr.open_group(os.path.join(dirZarr,fileName, "events.zarr"), mode="r")
+        zgEvents = zr.open_group(os.path.join(dirZarr, fileName, "events.zarr"), mode="r")
         zg = zr.open_group(os.path.join(dirZarr, fileName, "sounds.zarr"), mode="a")
         sound_mat = zg["sound_mat"]
 
@@ -161,7 +163,7 @@ class ElementMasking():
                     for i in np.where(toneblock)[0]:
                         negative_mask[i, :] = negative_dic[tt]
                     negative_masks += [negative_mask]
-                negative_mask = np.stack(negative_masks,axis=0)
+                negative_mask = np.stack(negative_masks, axis=0)
             else:
                 masks = []
                 negative_mask = np.zeros((latent_length, num_negatives), dtype=int)

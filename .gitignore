@@ -1,4 +1,5 @@
 .idea
-sounds/tests
-.data
-
+sounds/test_data
+sounds/data
+__pycache__
+```
