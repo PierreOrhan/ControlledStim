@@ -29,7 +29,7 @@ class ElementMasking:
 
         dataset = {"mask_time_indices": [],
                    "sampled_negative_indices": [],
-                   "latent_time_reduction_blocks": []
+                   "latent_time_reduction": []
                    }
         # Load the sequence data set
         sequences = pd.read_csv(sequence_data_set_dir + "/sequences.csv")
@@ -114,8 +114,9 @@ class ElementMasking:
             mask_time_indices[:, :] = tone_in_block
             sampled_negative_indices[:, :, :] = mat_negative_mask
 
-            dataset["mask_time_indices"] += [mask_time_indices]
-            dataset["sampled_negative_indices"] += [sampled_negative_indices]
-            dataset["latent_time_reduction_blocks"] += [latent_time_reduction_blocks]
-
-        return datasets.Dataset.from_dict(dataset)
+            import zarr as zr
+            zg = zr.open_group(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"), mode="a")
+            # if "mask_time_indices" not in zg.keys():
+            zg.array("mask_time_indices",data=mask_time_indices,chunks=(None,None))
+            zg.array("sampled_negative_indices", data=sampled_negative_indices, chunks=(None,None,None))
+            zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None,None))
