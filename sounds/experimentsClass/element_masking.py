@@ -27,10 +27,6 @@ class ElementMasking:
 
         num_negative_samples = 100  # Number of negative samples for contrastive learning
 
-        dataset = {"mask_time_indices": [],
-                   "sampled_negative_indices": [],
-                   "latent_time_reduction": []
-                   }
         # Load the sequence data set
         sequences = pd.read_csv(sequence_data_set_dir + "/sequences.csv")
         for seq in range(sequences.shape[0]):
