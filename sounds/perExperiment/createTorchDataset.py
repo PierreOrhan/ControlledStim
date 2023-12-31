@@ -6,8 +6,13 @@ import soundfile as sf
 import zarr as zr
 import numpy as np
 
-def load_ANNdataset_withMask(dataset_dir : Path):
-    sequences = pd.read_csv(dataset_dir / "sequences.csv")
+def load_ANNdataset_withMask(dataset_dir : Path) -> IterableDataset:
+    """
+    Converts an ANNdataset to a torch dataset, usable in pytorch.
+    :param dataset_dir:
+    :return:
+    """
+    sequences = pd.read_csv(dataset_dir / "trials.csv")
     def gen(shards):
         for shard in shards:
             sequence = sequences.iloc[shard, :]
@@ -22,7 +27,8 @@ def load_ANNdataset_withMask(dataset_dir : Path):
     shards = np.arange(sequences.shape[0])
     ds = IterableDataset.from_generator(gen, gen_kwargs={"shards": shards})
     ds = ds.with_format("torch")
-    # ---> Transforms to a TorchIterableDataset which has the attribute len and can be used
+    # ---> Transforms to a TorchIterableDataset (also named IterableDataset in pytorch)
+    # which has the attribute len and can be used
     # in a DataLoader (i.e combined with a collator!!)
     ds.info.dataset_size = np.sum(sequences["number_element"])
     return ds

@@ -1,4 +1,4 @@
-import sounds.perExperiment.ProtocolGeneration as PG
+import sounds.perExperiment.protocols.ProtocolGeneration as PG
 import sounds.experimentsClass.element_masking as EM
 import pathlib
 
@@ -18,7 +18,7 @@ soundpool.addSequence(seq3)
 soundpool.addSequence(seq4)
 soundpool.addSequence(seq5)
 
-comb = PG.Combinator("Dataset_1", 16000)
+comb = PG.Combinator("Dataset_1", 16000,data_dir)
 comb.combine([seq2,seq3,seq4,seq5], soundpool)
 
 protocol_1 = PG.Protocol("LocalGlobal_sssd", 0.5)
