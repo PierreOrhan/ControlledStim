@@ -50,8 +50,6 @@ class Protocol_independentTrial(Protocol):
             os.makedirs(output_dir / "sounds", exist_ok=True)
             sf.write(Path(output_dir) / "sounds" /  (name + ".wav"), sd_out, samplerate=self.samplerate)
 
-            ## Pierre: the advantage of a having a list of Sound would be to be able to access
-            # all the information of the Sound, including .duration here. It is bad to have to use a dictionnary
             durations = [s.duration for s in all_sound]
             start = np.cumsum([0] + durations[:-1])
             df_sound_info = pd.DataFrame()
@@ -62,7 +60,7 @@ class Protocol_independentTrial(Protocol):
             df_sound_info.to_csv(Path(output_dir) / "sound_info" /  (name + ".csv"), index=False)
 
             name_trials += [name]
-            wav_paths += [str(Path(output_dir) /  (name + ".wav"))]
+            wav_paths += [str(Path(output_dir) / "sound" /  (name + ".wav"))]
             mask_info_path += [None]
             sound_durations += [sd_out.shape[0]]
             sound_info_paths += [str(Path(output_dir) / "sound_info" /  (name + ".csv"))]

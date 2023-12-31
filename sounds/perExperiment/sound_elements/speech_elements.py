@@ -7,8 +7,6 @@ from io import BytesIO
 import torch
 from julius import  resample_frac
 
-
-
 @dataclass
 class FrenchSyllable(Sound):
     """ Generate syllable with a French voice at a given speed using MRBOLA+ESPEAK synthesizer from the voxpopuli package."""
