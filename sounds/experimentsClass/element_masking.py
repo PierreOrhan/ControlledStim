@@ -64,7 +64,7 @@ def mask_and_latent(sequence_data_set_dir: str, oneEvalPerEvent: bool = True):
         nb_tones = np.sum(sequence_info["name"]!="Silence")
 
         # Blocks that are fully contained in the tone
-        latent_time_reduction_blocks = np.stack([block_inside_tone for _ in range(nb_tones)], axis=0)
+        latent_time_reduction_blocks = block_inside_tone #np.stack([block_inside_tone for _ in range(nb_tones)], axis=0)
 
         ## stack: we have the same structure for all the sounds here (one type of sequence), so the
         # focus of the loss will be on the same latent.
@@ -108,7 +108,7 @@ def mask_and_latent(sequence_data_set_dir: str, oneEvalPerEvent: bool = True):
         # if "mask_time_indices" not in zg.keys():
         zg.array("mask_time_indices",data=mask_time_indices,chunks=(None,None))
         zg.array("sampled_negative_indices", data=sampled_negative_indices, chunks=(None,None,None))
-        zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None,None))
+        zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None))
 
         ## We update the masks info_path in the dataframe
         sequences.loc[seq,"mask_info_path"] = str(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"))
