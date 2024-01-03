@@ -109,3 +109,8 @@ def mask_and_latent(sequence_data_set_dir: str, oneEvalPerEvent: bool = True):
         zg.array("mask_time_indices",data=mask_time_indices,chunks=(None,None))
         zg.array("sampled_negative_indices", data=sampled_negative_indices, chunks=(None,None,None))
         zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None,None))
+
+        ## We update the masks info_path in the dataframe
+        sequences.loc[seq,"mask_info_path"] = str(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"))
+    # update the dataset info csv:
+    sequences.to_csv(sequence_data_set_dir + "/trials.csv")
