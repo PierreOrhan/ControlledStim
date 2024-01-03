@@ -1,6 +1,6 @@
 import numpy as np
 
-from sounds.perExperiment.sequences import Random_tone
+from sounds.perExperiment.sequences import ToneList
 from sounds.perExperiment.sound_elements import Bip,Silence
 from sounds.perExperiment.sound_elements import Sound_pool,Sound
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
@@ -24,7 +24,7 @@ class RandRegRand(Protocol_independentTrial):
     def __post_init__(self):
         sounds = [Bip(samplerate=self.samplerate,duration=self.duration_tone,fs=[f]) for f in self.tones_fs]
         self.sound_pool = Sound_pool.from_list(sounds)
-        self.seq = Random_tone(isi=self.isi,cycle=self.cycle)
+        self.seq = ToneList(isi=self.isi, cycle=self.cycle)
 
     def _trial(self) -> tuple[list[Sound],int]:
         ''' Trial implements the logic of the protocol for one trial.'''

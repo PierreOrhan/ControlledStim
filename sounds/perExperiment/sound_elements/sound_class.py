@@ -21,7 +21,8 @@ def ramp_sound(s:Sound,cosine_rmp_length:float = 0.005) -> None:
 
 def normalize_sound(s:Sound) -> None:
     # warning: modify in place the sounds.
-    s.sound = s.sound / np.sqrt(np.sum(s.sound ** 2, axis=-1, keepdims=True))
+    if np.sum(s.sound**2)!=0:
+        s.sound = s.sound / np.sqrt(np.sum(s.sound ** 2, axis=-1, keepdims=True))
 
 
 @dataclass(frozen=False)

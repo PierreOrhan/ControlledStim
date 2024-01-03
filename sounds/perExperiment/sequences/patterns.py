@@ -19,11 +19,18 @@ class Local_Standard(Sequence):
         self.nb_unique_elements = 1
 
 @dataclass
-class Random_tone(Sequence):
+class ToneList(Sequence):
     cycle : int = 5
     def __post_init__(self):
         self.pattern = list(range(self.cycle))
         self.nb_unique_elements = self.cycle
+
+@dataclass
+class RandomPattern(Sequence):
+    len : int = 1
+    nb_unique_elements : int = 1
+    def __post_init__(self):
+        self.pattern  = np.random.choice(np.arange(self.nb_unique_elements),self.len,replace=True)
 
 @dataclass
 class FullCommunityGraph(Sequence):
