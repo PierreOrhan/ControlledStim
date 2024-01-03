@@ -11,6 +11,7 @@ def load_ANNdataset_withMask(dataset_dir : Path) -> IterableDataset:
     Converts an ANNdataset to a torch dataset, usable in pytorch.
     :param dataset_dir:
     :return:
+        Huggingface's datasets IterableDataset, with dataset.info.dataset_size filed to allow it to be used by DataLoader.
     """
     sequences = pd.read_csv(dataset_dir / "trials.csv")
     def gen(shards):
@@ -27,7 +28,7 @@ def load_ANNdataset_withMask(dataset_dir : Path) -> IterableDataset:
     shards = np.arange(sequences.shape[0])
     ds = IterableDataset.from_generator(gen, gen_kwargs={"shards": shards})
     ds = ds.with_format("torch")
-    # ---> Transforms to a TorchIterableDataset (also named IterableDataset in pytorch)
+    # ---> Transforms to a TorchIterableDataset (named IterableDataset in pytorch)
     # which has the attribute len and can be used
     # in a DataLoader (i.e combined with a collator!!)
     ds.info.dataset_size = np.sum(sequences["number_element"])

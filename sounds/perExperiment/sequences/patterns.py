@@ -42,17 +42,36 @@ class FullCommunityGraph(Sequence):
         graph[self.nb_nodes//2,0]=True
         graph[self.nb_nodes//2-1,-1]=True
         graph[-1,self.nb_nodes//2-1]=True
-
+        self.graph = graph
         startWalk = np.random.randint(0,self.nb_nodes,1)[0]
         randomWalk = [startWalk]
         for _ in range(self.walk_length-1):
-            possibilities = np.where(graph[randomWalk[-1]])[0]
+            possibilities = np.where(self.graph[randomWalk[-1]])[0]
             randomWalk += [np.random.choice(possibilities,1)[0]]
         self.pattern = randomWalk
 
+    def out_community_step(self) -> None:
+        ## Given the current pattern, extend it by a step from the community to another:
+        if self.pattern[-1]<self.nb_nodes//2:
+            target = np.where(np.logical_not(self.graph[self.pattern[-1]][self.nb_nodes//2:]))[0]+self.nb_nodes//2
+        else:
+            target = np.where(np.logical_not(self.graph[self.pattern[-1]][:self.nb_nodes//2]))[0]
+        assert len(target)>0
+        pick_target = np.random.choice(target,1)[0]
+        self.pattern.append(pick_target)
+
+    def in_community_step(self) -> None:
+        ## Given the current pattern, extend it by a step within the community:
+        if self.pattern[-1]<self.nb_nodes//2:
+            target = np.where(np.logical_not(self.graph[self.pattern[-1]][:self.nb_nodes//2]))[0]
+        else:
+            target = np.where(np.logical_not(self.graph[self.pattern[-1]][self.nb_nodes//2:]))[0]+self.nb_nodes//2
+        assert len(target)>0
+        pick_target = np.random.choice(target,1)[0]
+        self.pattern.append(pick_target)
 
 @dataclass
-class SparseCommunityGraph(Sequence):
+class SparseCommunityGraph(FullCommunityGraph):
     nb_nodes : int = 12
     walk_length : int = 16
     graph : np.ndarray = field(init=False)
