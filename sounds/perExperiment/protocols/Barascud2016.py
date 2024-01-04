@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from sounds.perExperiment.sequences import ToneList
 from sounds.perExperiment.sound_elements import Bip,Silence
@@ -26,7 +27,7 @@ class RandRegRand(Protocol_independentTrial):
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = ToneList(isi=self.isi, cycle=self.cycle)
 
-    def _trial(self) -> tuple[list[Sound],int]:
+    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
         ''' Trial implements the logic of the protocol for one trial.'''
 
         ## Instantiate the vocabularies:
@@ -53,4 +54,5 @@ class RandRegRand(Protocol_independentTrial):
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
         # should be a list of Sound
         self.sound_pool.clear_picked()
-        return (all_sound,nb_element)
+        return (all_sound,nb_element,pd.DataFrame.from_dict({"cycle":self.cycle,"sequence_isi":self.sequence_isi,"isi":self.isi,
+                                                             "motif_repeat":self.motif_repeat}))

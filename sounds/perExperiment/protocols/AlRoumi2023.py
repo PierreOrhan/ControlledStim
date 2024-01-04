@@ -1,3 +1,5 @@
+import pandas as pd
+
 from sounds.perExperiment.sequences import lot_patterns,ToneList,Sequence,RandomPattern
 from sounds.perExperiment.sound_elements import Bip,Silence
 from sounds.perExperiment.sound_elements import Sound_pool,Sound
@@ -39,7 +41,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
         all_pool = [s_rand] + [s_reg for _ in range(self.motif_repeat)] + [s_reg]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.randSeqEnd]
         return all_pool,all_seq
-    def _trial(self) -> tuple[list[Sound],int]:
+    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
         ''' Trial implements the logic of the protocol for one trial.'''
         all_pool, all_seq = self._getPoolAndSeq()
         all_sound = []
@@ -56,7 +58,11 @@ class RandRegRand_LOT(Protocol_independentTrial):
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
         # should be a list of Sound
         self.sound_pool.clear_picked()
-        return (all_sound,nb_element)
+
+        ### Further returns additional trial information to be stored:
+        df_info = pd.DataFrame.from_dict({"isi":[self.isi],"sequence_isi":[self.sequence_isi],"lot_seq":[self.lot_seq]})
+
+        return (all_sound,nb_element,df_info)
 
 @dataclass
 class RandRegRand_LOT_deviant(RandRegRand_LOT):

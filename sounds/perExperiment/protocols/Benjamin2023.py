@@ -6,7 +6,7 @@ from sounds.perExperiment.sound_elements import Sound_pool,Sound
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
 from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
 from dataclasses import dataclass,field
-
+import pandas as pd
 from typing import Union
 
 @dataclass
@@ -23,7 +23,7 @@ class Benjamin2023(Protocol_independentTrial):
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = FullCommunityGraph(isi=self.isi,walk_length=self.walk_length)
 
-    def _trial(self) -> tuple[list[Sound],int]:
+    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
         ''' Trial implements the logic of the protocol for one trial.'''
 
         ## Instantiate the vocabularies:
@@ -40,7 +40,8 @@ class Benjamin2023(Protocol_independentTrial):
             all_sound += s_p
             nb_element += np.sum([type(s)!= Silence for s in s_p])
 
-        return (all_sound,nb_element)
+        return (all_sound,nb_element,pd.DataFrame.from_dict({"duration_tone":self.duration_tone,"isi":self.isi,
+                                                             "walk_length":self.walk_length}))
 
 @dataclass
 class Benjamin2023_syllable(Benjamin2023):

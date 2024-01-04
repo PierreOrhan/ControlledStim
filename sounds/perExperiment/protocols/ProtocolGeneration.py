@@ -24,9 +24,11 @@ class Protocol_independentTrial(Protocol):
     name : str = field(default=str)
     samplerate: int = 16000
     @abstractmethod
-    def _trial(self) -> tuple[list[Sound],int]:
+    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
         # Should return the list of Sound
         # as well as the number of sound which are not Silence (number_element)
+        # Finally, it should return a pandas dataFrame which contains additional information
+        # to be able to easily sort trials.
         raise Exception("method to subclass")
 
     def _savetrial(self,all_sound,output_dir,name) -> np.ndarray:
@@ -61,9 +63,10 @@ class Protocol_independentTrial(Protocol):
         :return: a trials.csv dataFrame which describe the dataset.
         """
         name_trials,wav_paths,mask_info_path,sound_durations,sound_info_paths,number_elements = [],[],[],[],[],[]
+        trial_infos = []
         for ntrial in range(n_trial):
             name = self.name+"_trial-"+str(ntrial)
-            all_sound,nb_element = self._trial()
+            all_sound,nb_element,trial_info = self._trial()
             sd_out =self._savetrial(all_sound,output_dir,name)
 
             name_trials += [name]
@@ -72,6 +75,7 @@ class Protocol_independentTrial(Protocol):
             sound_durations += [sd_out.shape[0]]
             sound_info_paths += [str(Path(output_dir) / "sound_info" / (name + ".csv"))]
             number_elements += [nb_element]
+            trial_infos += [trial_info]
         # generating a csv with the sequence names and the corresponding soundfile paths
         df = pd.DataFrame()
         df["name"] = name_trials
@@ -99,10 +103,11 @@ class ListProtocol_independentTrial:
         :return: a trials.csv dataFrame which describe the dataset.
         """
         name_trials,wav_paths,mask_info_path,sound_durations,sound_info_paths,number_elements = [],[],[],[],[],[]
+        trial_infos = []
         for protocol in self.list_protocol:
             for ntrial in range(n_trial):
                 name = protocol.name+"_trial-"+str(ntrial)
-                all_sound,nb_element = protocol._trial()
+                all_sound,nb_element,trial_info = protocol._trial()
                 sd_out = protocol._savetrial(all_sound, output_dir, name)
 
                 name_trials += [name]
@@ -111,6 +116,7 @@ class ListProtocol_independentTrial:
                 sound_durations += [sd_out.shape[0]]
                 sound_info_paths += [str(Path(output_dir) / "sound_info" / (name + ".csv"))]
                 number_elements += [nb_element]
+                trial_infos += [trial_info]
 
         # generating a csv with the sequence names and the corresponding soundfile paths
         df = pd.DataFrame()
@@ -120,6 +126,7 @@ class ListProtocol_independentTrial:
         df["duration"] = sound_durations
         df["sound_info_path"] = sound_info_paths
         df["number_element"] = number_elements
+        df = pd.merge(df,pd.concat(trial_infos),left_index=True,right_index=True)
         df.to_csv(Path(output_dir) / "trials.csv", index=False)
         return df
 
