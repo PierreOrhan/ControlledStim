@@ -51,8 +51,10 @@ def bip(samplerate: int,duration: float,fs: Union[list[float],np.ndarray]):
 class Bip(Sound):
     name : str = "Bip"
     fs : Union[list[float],np.ndarray] = field(default=list) # frequencies of the pure tones.
+    first_freq : int = field(init=False)
     def __post_init__(self) -> None:
         self.sound = bip(self.samplerate,self.duration,self.fs)
+        self.first_freq = self.fs[0]
 
 @dataclass
 class Silence(Sound):

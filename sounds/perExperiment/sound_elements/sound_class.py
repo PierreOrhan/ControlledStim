@@ -33,7 +33,7 @@ class Sound_pool(list[Sound]):
         self.picked = []
 
     @classmethod
-    def from_list(cls,ls):
+    def from_list(cls,ls : list[Sound]):
         s = Sound_pool()
         for l in ls:
             s.append(l)
@@ -51,3 +51,25 @@ class Sound_pool(list[Sound]):
         return [self[p] for p in picks]
     def clear_picked(self):
         self.picked = []
+
+    def boundpick_norepeat_n(self,n:int,min_d:float,max_d:float,on_feature:str) -> list[Sound]:
+        # Pick sounds in the list but at maximal and minimal distance from each other,
+        #  acording from on_feature so that we make sure they have distinct properties.
+        ### TODO: instead of using __getattribute__ force the sounds to be sortable!
+        picks = []
+        for _ in range(n):
+            ## Find all possible sound:
+            if len(self.picked) > 0:
+                possible_s = []
+                for idl,l in [(e,self[e]) for e in np.setdiff1d(range(self.__len__()),self.picked)]:
+                    l_atrr = l.__getattribute__(on_feature)
+                    if np.all([abs(l_atrr-self[e].__getattribute__(on_feature))>min_d for e in self.picked]) and \
+                            np.all([abs(l_atrr-self[e].__getattribute__(on_feature))<max_d for e in self.picked]):
+                        possible_s+=[idl]
+                assert len(possible_s)>0
+                self.picked.append(possible_s[np.random.choice(range(len(possible_s)), 1, replace=False)[-1]])
+            else:
+                self.picked.append(np.random.choice(range(self.__len__()), 1, replace=False)[0])
+            picks += [self.picked[-1]]
+        return [self[p] for p in picks]
+

@@ -64,7 +64,7 @@ class LOT_shrinking(LOT_p):
 class LOT_pairsAndAlt2(LOT_p):
     name = "pairsAndAlt2"
     def __post_init__(self):
-        self.pattern = [0,1,0,1,1,0,1,0,1,0,1,1,0,1]
+        self.pattern = [0,1,0,0,1,1,0,1,0,1,0,0,1,1,0,1]
         self.deviant_pos = [9,11,12,14]
 @dataclass
 class LOT_threetwo(LOT_p):
