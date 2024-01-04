@@ -126,7 +126,7 @@ class ListProtocol_independentTrial:
         df["duration"] = sound_durations
         df["sound_info_path"] = sound_info_paths
         df["number_element"] = number_elements
-        df = pd.merge(df,pd.concat(trial_infos),left_index=True,right_index=True)
+        df = df.join(pd.concat(trial_infos).set_axis(df.index))
         df.to_csv(Path(output_dir) / "trials.csv", index=False)
         return df
 
