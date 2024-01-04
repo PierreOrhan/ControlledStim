@@ -48,7 +48,7 @@ class RandRegRand(Protocol_independentTrial):
                 ramp_sound(s)
                 normalize_sound(s)
             all_sound += s_p
-            nb_element += len(s_p)
+            nb_element += np.sum([type(s)!= Silence for s in s_p])
             if self.sequence_isi > 0:
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
         # should be a list of Sound

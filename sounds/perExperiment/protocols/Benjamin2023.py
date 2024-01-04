@@ -1,7 +1,7 @@
 import numpy as np
 
 from sounds.perExperiment.sequences import FullCommunityGraph
-from sounds.perExperiment.sound_elements import FrenchSyllable,Bip
+from sounds.perExperiment.sound_elements import FrenchSyllable,Bip,Silence
 from sounds.perExperiment.sound_elements import Sound_pool,Sound
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
 from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
@@ -38,7 +38,7 @@ class Benjamin2023(Protocol_independentTrial):
                 ramp_sound(s,cosine_rmp_length=0.02)
                 normalize_sound(s)
             all_sound += s_p
-            nb_element += len(s_p)
+            nb_element += np.sum([type(s)!= Silence for s in s_p])
 
         return (all_sound,nb_element)
 

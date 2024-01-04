@@ -25,6 +25,8 @@ class Protocol_independentTrial(Protocol):
     samplerate: int = 16000
     @abstractmethod
     def _trial(self) -> tuple[list[Sound],int]:
+        # Should return the list of Sound
+        # as well as the number of sound which are not Silence (number_element)
         raise Exception("method to subclass")
 
     def _savetrial(self,all_sound,output_dir,name) -> np.ndarray:
