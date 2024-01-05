@@ -15,7 +15,7 @@ class Sequence:
     nb_unique_elements: int = field(init=False)
     isi: float = 0.0  # in seconds
 
-    def __call__(self, spool: Sound_pool):
+    def __call__(self, spool: Sound_pool) -> list[Sound]:
         try:
             assert len(np.unique([s.samplerate for s in spool]))==1 # shared samplerate
         except:

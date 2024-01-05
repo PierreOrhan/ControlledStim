@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from pathlib import Path
 
@@ -13,22 +15,42 @@ output_dir = Path("/media/pierre/NeuroData2/datasets/lot_testGeneration") / "tes
 #     for isi in np.arange(0,0.3,step=0.05):
 # seq_isi = 0.5
 # isi = 0.2
+
+### Debugging: We fix the pool and repeat the probing over and over
+import pandas as pd
+from sounds.perExperiment.sequences import lot_patterns,ToneList,Sequence,RandomPattern
+from sounds.perExperiment.sound_elements import Bip,Silence
+from sounds.perExperiment.sound_elements import Sound_pool,Sound
+from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
+from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
+from dataclasses import dataclass,field
+import numpy as np
+from typing import Union,Tuple
+
+tones_fs=np.logspace(np.log(222),np.log(2000),20,base=np.exp(1))
+sounds_rand = [Bip(name="bip-" + str(idf), samplerate=16000, duration=0.05, fs=[f]) for idf, f in
+          enumerate(np.array(tones_fs[:16])[ [3, 11, 14,  2,  7,  9,  1, 13,  8,  5,  6,  0, 12,  4, 10, 15]])]
+s_rand = Sound_pool.from_list(sounds_rand)
+s_reg = Sound_pool.from_list([Bip(name="bip-" + str(idf), samplerate=16000, duration=0.05, fs=[f])
+                              for idf,f in  enumerate([222,2000])]) #889.8296701050009, 1413.4860237345383
+
 seq_isi = 0
-isi = 0.02
+isi = 0
 rs = [RandRegRand_LOT_deviant_BoundFixedPool(name="RandReg_lot_isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(0),
                            lot_seq="pairsAndAlt2",
-                           tones_fs=np.logspace(np.log(1000)/np.log(10),np.log(2000)/np.log(10),num=1000),
+                           tones_fs=tones_fs,
                            deviant=0,
-                           motif_repeat=10,
+                           motif_repeat=6,
                            isi=isi,sequence_isi=seq_isi)]
-rs[0].samplePool(200,np.inf)
+# rs[0].samplePool(0,np.inf)
+rs[0].fixPoolSampled(s_rand,s_reg)
 ### Make a plot as a function of the distance between the two tones:
 for deviant in np.arange(1,4):
     r = RandRegRand_LOT_deviant_BoundFixedPool(name="RandReg_lot_isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(deviant),
                            lot_seq="pairsAndAlt2",
-                           tones_fs=np.logspace(np.log(1000)/np.log(10),np.log(2000)/np.log(10),num=1000),
+                           tones_fs=np.logspace(np.log(222),np.log(2000),20,base=np.exp(1)),
                            deviant=deviant,
-                           motif_repeat=10,
+                           motif_repeat=6,
                            isi=isi,sequence_isi=seq_isi)
     r.fixPoolSampled(rs[0].s_rand,rs[0].s_reg)
     rs += [r]
@@ -36,5 +58,5 @@ for deviant in np.arange(1,4):
 lp = ListProtocol_independentTrial(rs)
 lp.generate(n_trial=1,output_dir=output_dir)
 
-from sounds.experimentsClass.element_masking import mask_and_latent
-mask_and_latent(str(output_dir))
+from sounds.experimentsClass.element_masking import mask_and_latent_BalancedNegatives
+mask_and_latent_BalancedNegatives(str(output_dir))

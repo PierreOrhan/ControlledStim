@@ -49,9 +49,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
         for p,seq in zip(all_pool, all_seq):
             s_p = seq(p) # combine sequence and pool
             ## Apply sound modifications:
-            for s in s_p:
-                ramp_sound(s)
-                normalize_sound(s)
+            s_p = [normalize_sound(ramp_sound(s)) for s in s_p]
             all_sound += s_p
             nb_element += np.sum([type(s)!= Silence for s in s_p])
             if self.sequence_isi > 0:
@@ -124,7 +122,8 @@ class RandRegRand_LOT_deviant_BoundFixedPool(RandRegRand_LOT_deviant_fixedPool):
     def samplePool(self,min_freqDist:float,max_freqDist:float) -> Tuple[list[Sound],list[Sound]]:
         assert self.s_rand is None
         self.s_rand  = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
-        self.s_reg = Sound_pool.from_list(self.s_rand.boundpick_norepeat_n(2,min_freqDist,max_freqDist,"first_freq"))
+        self.sound_pool.clear_picked()
+        self.s_reg = Sound_pool.from_list(self.sound_pool.boundpick_norepeat_n(2,min_freqDist,max_freqDist,"first_freq"))
         return self.s_rand,self.s_reg
 
 @dataclass

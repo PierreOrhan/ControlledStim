@@ -34,9 +34,7 @@ class Benjamin2023(Protocol_independentTrial):
         for p,seq in zip(all_pool, all_seq):
             s_p = seq(p) # combine sequence and pool
             ## Apply sound modifications:
-            for s in s_p:
-                ramp_sound(s,cosine_rmp_length=0.02)
-                normalize_sound(s)
+            s_p = [normalize_sound(ramp_sound(s,cosine_rmp_length=0.02)) for s in s_p]
             all_sound += s_p
             nb_element += np.sum([type(s)!= Silence for s in s_p])
 

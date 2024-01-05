@@ -45,9 +45,7 @@ class RandRegRand(Protocol_independentTrial):
         for p,seq in zip(all_pool, all_seq):
             s_p = seq(p) # combine sequence and pool
             ## Apply sound modifications:
-            for s in s_p:
-                ramp_sound(s)
-                normalize_sound(s)
+            s_p = [normalize_sound(ramp_sound(s)) for s in s_p]
             all_sound += s_p
             nb_element += np.sum([type(s)!= Silence for s in s_p])
             if self.sequence_isi > 0:

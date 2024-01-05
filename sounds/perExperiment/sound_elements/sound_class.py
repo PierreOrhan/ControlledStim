@@ -1,3 +1,5 @@
+import dataclasses
+
 import numpy as np
 from dataclasses import dataclass,field
 
@@ -10,19 +12,26 @@ class Sound:
     def __post_init__(self) -> None:
         self.sound = np.zeros(int(self.duration*self.samplerate))
 
-def ramp_sound(s:Sound,cosine_rmp_length:float = 0.005) -> None:
+
+def ramp_sound(s:Sound,cosine_rmp_length:float = 0.005) -> Sound:
     # Warning: modify in place the sounds.
     # creating ramps
     hanning_window = np.hanning(int(cosine_rmp_length * s.samplerate))
     hanning_window = hanning_window[:int(np.floor(hanning_window.shape[0] / 2))]
+    newS = dataclasses.replace(s)
     # filtering tones with ramps:
-    s.sound[:hanning_window.shape[0]] = s.sound[:hanning_window.shape[0]] * hanning_window
-    s.sound[-hanning_window.shape[0]:] = s.sound[-hanning_window.shape[0]:] * hanning_window[::-1]
+    newS.sound[:hanning_window.shape[0]] = newS.sound[:hanning_window.shape[0]] * hanning_window
+    newS.sound[-hanning_window.shape[0]:] = newS.sound[-hanning_window.shape[0]:] * hanning_window[::-1]
+    return newS
 
-def normalize_sound(s:Sound) -> None:
+def normalize_sound(s:Sound) -> Sound:
     # warning: modify in place the sounds.
     if np.sum(s.sound**2)!=0:
-        s.sound = s.sound / np.sqrt(np.sum(s.sound ** 2, axis=-1, keepdims=True))
+        newS = dataclasses.replace(s)
+        newS.sound = newS.sound / np.sqrt(np.sum(newS.sound ** 2, axis=-1, keepdims=True))
+        return newS
+    else:
+        return s
 
 
 @dataclass(frozen=False)
