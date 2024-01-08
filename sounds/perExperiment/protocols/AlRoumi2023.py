@@ -38,7 +38,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
 
     def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
         ## Instantiate the vocabularies:
-        if self.s_rand is None:
+        if not self.s_rand is None:
             all_pool = [self.s_rand] + [self.s_reg for _ in range(self.motif_repeat)] + [self.s_reg]
         else:
             s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
@@ -98,7 +98,13 @@ class RandRegRand_LOT_deviant(RandRegRand_LOT):
         self.devSeq.as_deviant_pattern(self.deviant)
 
     def _getPoolAndSeq(self) -> Tuple[list[Sound_pool], list[Sequence]]:
-        all_pool, _ = super(RandRegRand_LOT_deviant)._getPoolAndSeq()
+        ## Instantiate the vocabularies:
+        if not self.s_rand is None:
+            all_pool = [self.s_rand] + [self.s_reg for _ in range(self.motif_repeat)] + [self.s_reg]
+        else:
+            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
+            s_reg = Sound_pool.from_list(s_rand.pick_norepeat_n(2))
+            all_pool = [s_rand] + [s_reg for _ in range(self.motif_repeat)] + [s_reg]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.devSeq]
         return all_pool, all_seq
 
@@ -109,7 +115,7 @@ class RandRegRand_LOT_deviant(RandRegRand_LOT):
 
 
 @dataclass
-class RandReg_LOT(RandRegRand_LOT):
+class RandRegRand_LOT_orig(RandRegRand_LOT):
     def __post_init__(self):
         sounds = [Bip(name="bip-"+str(idf),samplerate=self.samplerate, duration=self.duration_tone, fs=[f]) for idf,f in enumerate(self.tones_fs)]
         # Note: naming the bip is useful to one who is where.
@@ -117,7 +123,13 @@ class RandReg_LOT(RandRegRand_LOT):
         self.randSeq = ToneList(isi=self.isi, cycle=16)
         self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
     def _getPoolAndSeq(self) -> Tuple[list[Sound_pool], list[Sequence]]:
-        all_pool, _ = super(RandRegRand_LOT_deviant)._getPoolAndSeq()
+        ## Instantiate the vocabularies:
+        if not self.s_rand is None:
+            all_pool = [self.s_rand] + [self.s_reg for _ in range(self.motif_repeat)] + [self.s_reg]
+        else:
+            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
+            s_reg = Sound_pool.from_list(s_rand.pick_norepeat_n(2))
+            all_pool = [s_rand] + [s_reg for _ in range(self.motif_repeat)] + [s_reg]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.regSeq]
         return all_pool, all_seq
 

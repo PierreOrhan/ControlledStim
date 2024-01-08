@@ -3,8 +3,7 @@ import os
 import numpy as np
 from pathlib import Path
 
-from sounds.perExperiment.protocols.AlRoumi2023 import RandRegRand_LOT,RandRegRand_LOT_Generalize,RandRegRand_LOT_deviant,\
-    RandRegRand_LOT_deviant_BoundFixedPool,RandRegRand_LOT_deviant_fixedPool,RandRegRand_LOT_fixedPool
+from sounds.perExperiment.protocols.AlRoumi2023 import RandRegRand_LOT,RandRegRand_LOT_deviant,RandRegRand_LOT_orig
 from sounds.perExperiment.protocols.ProtocolGeneration import ListProtocol_independentTrial
 
 output_dir = Path("/media/pierre/NeuroData2/datasets/lot_testGeneration") / "test_randregrand"
@@ -39,7 +38,7 @@ for idfreq_high,freq_high in enumerate(tones_fs[::2]):
                                       for idf,f in  enumerate([freq_low,freq_high])]) #889.8296701050009, 1413.4860237345383
         seq_isi = 0
         isi = 0
-        rs += [RandRegRand_LOT_deviant_BoundFixedPool(name="RandReg_lot_Deviant_freqHigh"+str(idfreq_high)+"_freqLow"+str(idfreq_low), #isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(0)
+        rs += [RandRegRand_LOT_deviant(name="RandReg_lot_Deviant_freqHigh"+str(idfreq_high)+"_freqLow"+str(idfreq_low), #isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(0)
                                    lot_seq="pairs",
                                    tones_fs=tones_fs,
                                    deviant=0,
@@ -47,7 +46,7 @@ for idfreq_high,freq_high in enumerate(tones_fs[::2]):
                                    isi=isi,sequence_isi=seq_isi)]
         rs[-1].fixPoolSampled(s_rand, s_reg)
 
-        rs += [RandRegRand_LOT_fixedPool(name="RandReg_lot_Orig_freqHigh"+str(idfreq_high)+"_freqLow"+str(idfreq_low), #isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(0)
+        rs += [RandRegRand_LOT_orig(name="RandReg_lot_Orig_freqHigh"+str(idfreq_high)+"_freqLow"+str(idfreq_low), #isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(0)
                                    lot_seq="pairs",
                                    tones_fs=tones_fs,
                                    motif_repeat=3,
