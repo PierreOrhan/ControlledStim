@@ -113,7 +113,7 @@ class ListProtocol_independentTrial:
                 name_trials += [name]
                 wav_paths += [str(Path(output_dir) / "sounds" / (name + ".wav"))]
                 mask_info_path += [None]
-                sound_durations += [sd_out.shape[0]/self.samplerate]
+                sound_durations += [sd_out.shape[0]/protocol.samplerate]
                 sound_info_paths += [str(Path(output_dir) / "sound_info" / (name + ".csv"))]
                 number_elements += [nb_element]
                 trial_infos += [trial_info]

@@ -37,7 +37,7 @@ s_reg = Sound_pool.from_list([Bip(name="bip-" + str(idf), samplerate=16000, dura
 seq_isi = 0
 isi = 0
 rs = [RandRegRand_LOT_deviant_BoundFixedPool(name="RandReg_lot_isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(0),
-                           lot_seq="pairsAndAlt2",
+                           lot_seq="pairs",
                            tones_fs=tones_fs,
                            deviant=0,
                            motif_repeat=6,
@@ -47,7 +47,7 @@ rs[0].fixPoolSampled(s_rand,s_reg)
 ### Make a plot as a function of the distance between the two tones:
 for deviant in np.arange(1,4):
     r = RandRegRand_LOT_deviant_BoundFixedPool(name="RandReg_lot_isi-"+str(isi)+"_seqisi-"+str(seq_isi)+"_deviant-"+str(deviant),
-                           lot_seq="pairsAndAlt2",
+                           lot_seq="pairs",
                            tones_fs=np.logspace(np.log(222),np.log(2000),20,base=np.exp(1)),
                            deviant=deviant,
                            motif_repeat=6,
