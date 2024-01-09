@@ -72,7 +72,7 @@ class Protocol_independentTrial(Protocol):
             name_trials += [name]
             wav_paths += [str(Path(output_dir) / "sounds" / (name + ".wav"))]
             mask_info_path += [None]
-            sound_durations += [sd_out.shape[0]]
+            sound_durations += [sd_out.shape[0]/self.samplerate]
             sound_info_paths += [str(Path(output_dir) / "sound_info" / (name + ".csv"))]
             number_elements += [nb_element]
             trial_infos += [trial_info]
@@ -113,7 +113,7 @@ class ListProtocol_independentTrial:
                 name_trials += [name]
                 wav_paths += [str(Path(output_dir) / "sounds" / (name + ".wav"))]
                 mask_info_path += [None]
-                sound_durations += [sd_out.shape[0]]
+                sound_durations += [sd_out.shape[0]/protocol.samplerate]
                 sound_info_paths += [str(Path(output_dir) / "sound_info" / (name + ".csv"))]
                 number_elements += [nb_element]
                 trial_infos += [trial_info]
@@ -158,7 +158,7 @@ class Protocol_TrainTest(Protocol):
         df_sound_info["is_train"] = is_train
         os.makedirs(output_dir / "sound_info", exist_ok=True)
         df_sound_info.to_csv(Path(output_dir) / "sound_info" / (name + ".csv"), index=False)
-        return sd_out.shape[0]
+        return sd_out.shape[0]/self.samplerate
 
     def generate(self,n_trial : int ,output_dir : Union[str,Path]) -> pd.DataFrame:
         """
@@ -179,7 +179,7 @@ class Protocol_TrainTest(Protocol):
 
             for all_sound,subname,is_train,nb_element in zip((all_sound_train,all_sound_test),
                                                              ("train","test"),(True,False),(nb_element_train,nb_element_test)):
-                sound_durations += [ self._savetrial(all_sound_train,output_dir,name,is_train = is_train)]
+                sound_durations += [ self._savetrial(all_sound,output_dir,name,is_train = is_train)]
                 name_trials += [name+"_"+subname]
                 wav_paths += [str(Path(output_dir) / "sounds" /  (name + "_train" + ".wav"))]
                 mask_info_path += [None]
