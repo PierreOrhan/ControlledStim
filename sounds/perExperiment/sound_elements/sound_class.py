@@ -28,7 +28,7 @@ def normalize_sound(s:Sound) -> Sound:
     # warning: modify in place the sounds.
     if np.sum(s.sound**2)!=0:
         newS = copy.deepcopy(s)
-        newS.sound = newS.sound / np.sqrt(np.sum(newS.sound ** 2, axis=-1, keepdims=True))
+        newS.sound = (newS.sound - np.mean(newS.sound,axis=-1,keepdims=True))/ np.std(newS.sound, axis=-1, keepdims=True)
         return newS
     else:
         return s
