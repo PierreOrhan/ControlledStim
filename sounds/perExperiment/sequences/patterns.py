@@ -101,3 +101,11 @@ class SparseCommunityGraph(FullCommunityGraph):
             possibilities = np.where(graph[randomWalk[-1]])[0]
             randomWalk += [np.random.choice(possibilities,1)[0]]
         self.pattern = randomWalk
+
+@dataclass
+class SyllableTriplet(Sequence):
+    cycle: int = 3
+
+    def __post_init__(self):
+        self.pattern = list(range(self.cycle))
+        self.nb_unique_elements = self.cycle
