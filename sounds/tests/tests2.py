@@ -13,5 +13,5 @@ output_dir = Path("/Users/juliengadonneix/Desktop/code/LongProject/Jutta2012") /
 # r= Benjamin2023_syllable()
 # r.generate(n_trial=1,output_dir=output_dir)
 
-r = PitchRuleDeviant_1(nb_deviant_rule=0,nb_deviant_pitch=0)
+r = PitchRuleDeviant_1()
 r.generate(n_trial=1,output_dir=output_dir)

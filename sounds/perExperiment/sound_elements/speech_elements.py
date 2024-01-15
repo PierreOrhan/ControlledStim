@@ -44,7 +44,7 @@ class EnglishSyllable(Sound):
     """ Generate syllable with a French voice at a given speed using MRBOLA+ESPEAK synthesizer from the voxpopuli package."""
     syllable : str = field(default="tu")
     speed : int = 160
-    lang : str = "en"
+    lang : str = "fr"
     voice_id : int = 1
     def __post_init__(self):
         self.name = "EnglishSyllable_"+self.syllable
