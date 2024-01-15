@@ -1,13 +1,16 @@
+from abc import ABC
+
 import numpy as np
 
-from sounds.perExperiment.sequences import SyllableTriplet
-from sounds.perExperiment.sound_elements import EnglishSyllable,Silence
-from sounds.perExperiment.sound_elements import Sound_pool,Sound
+from sounds.perExperiment.sequences.patterns import SyllableTriplet
+from sounds.perExperiment.sound_elements.speech_elements import EnglishSyllable
+from sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
 from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
-from dataclasses import dataclass,field
+from dataclasses import dataclass
 import pandas as pd
 from typing import Union
+from julius import resample_frac
 
 @dataclass
 class PitchRuleDeviant_1(Protocol_independentTrial):
@@ -52,7 +55,7 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         for i in range(self.nb_deviant_rule):
             i_s1 = np.random.choice(range(2))[0]
             i_s2 = np.random.choice(range(20))[0]
-            if i_s1==0:
+            if i_s1 == 0:
                 s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+3]]
             else:
                 s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+1]]
@@ -62,6 +65,11 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             i_s1 = np.random.choice(range(2))[0]
             i_s2 = np.random.choice(range(20))[0]
             s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+2]]
+            sr = s[0].samplerate
+            new_sr = sr * 1.11
+            for i in range(len(s)):
+                s[i].sound = resample_frac(s[i].sound, sr, new_sr)
+                s[i].samplerate = new_sr
             all_pool.append(Sound_pool.from_list(s))
 
         all_pool = np.random.permutation(all_pool)
@@ -74,7 +82,7 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             ## Apply sound modifications:
             s_p = [normalize_sound(ramp_sound(s)) for s in s_p]
             all_sound += s_p
-            nb_element += np.sum([type(s)!= Silence for s in s_p])
+            nb_element += np.sum([type(s) != Silence for s in s_p])
             if self.sequence_isi > 0:
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
 
