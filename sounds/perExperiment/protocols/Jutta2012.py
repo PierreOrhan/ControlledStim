@@ -93,7 +93,7 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             i_s2 = np.random.choice(20)
             s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+2]]
             sr = s[0].samplerate
-            new_sr = sr * 1.11
+            new_sr = int(sr * 1.11)
             for j in range(len(s)):
                 s[j].sound = resample_frac(s[j].sound, sr, new_sr)
                 s[j].samplerate = new_sr
