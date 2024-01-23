@@ -3,13 +3,14 @@ from abc import ABC
 import numpy as np
 
 from sounds.perExperiment.sequences.patterns import SyllableTriplet
-from sounds.perExperiment.sound_elements.speech_elements import EnglishSyllable
+from sounds.perExperiment.sound_elements.speech_elements import FrenchSyllable
 from sounds.perExperiment.sound_elements.tones_elements import Bip
 from sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
 from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
 from dataclasses import dataclass
 import pandas as pd
+import copy
 from typing import Union
 import librosa
 import torch
@@ -19,7 +20,7 @@ import torch
 class PitchRuleDeviant_1(Protocol_independentTrial):
     name : str = "PitchRuleDeviant_1"
     duration_tone : float = 0.250
-    samplerate : int = 16000
+    samplerate : int = 16000#
     sequence_isi : float = 0.700
     isi : float = 0.050
     nb_standard : int = 658
@@ -39,8 +40,10 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         X_syllables = ["".join(a) for a in X_syllables]
         all_syllables = A_syllables + B_syllables + X_syllables
         # AXB is the sound structure.
-        sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
-                  for a in all_syllables]
+        # sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
+        #           for a in all_syllables]
+        sounds = [FrenchSyllable(samplerate=self.samplerate, syllable=a,force_duration=False,pitch_modifiers=[],voice_id=2)
+                                        for a in all_syllables]
         # sounds = [Bip(samplerate=self.samplerate, duration=self.duration_tone, fs=[300, 800]) for a in all_syllables]
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = SyllableTriplet(isi=self.isi)
@@ -76,10 +79,14 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             for j in range(len(s)):
 
                 ##TODO: heuristic to find the number of steps:
-                import librosa
                 nstep = np.log(1.11)/np.log(1.05946)
-                s[j].sound = librosa.effects.pitch_shift(s[j].sound,sr=s[j].samplerate
-                                                         ,n_steps=nstep,scale=True)
+                newS = copy.deepcopy(s[j])
+                import pyrubberband.pyrb as pyrb
+                ## This requires to have installed rubberband
+                # as well as the rubberband-CLI
+                newS.sound = pyrb.pitch_shift(newS.sound,sr=s[j].samplerate
+                                                         ,n_steps=nstep)
+                s[j] = newS
                 ## double check this part.
             all_pool.append(Sound_pool.from_list(s))
 
@@ -91,17 +98,16 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         for p,seq in zip(all_pool, all_seq):
             s_p = seq(p) # combine sequence and pool
             ## Apply sound modifications:
-            s_p = [normalize_sound(ramp_sound(s)) for s in s_p]
+            s_p = [ramp_sound(s,cosine_rmp_length=0.02) for s in s_p]
             all_sound += s_p
             nb_element += np.sum([type(s) != Silence for s in s_p])
             if self.sequence_isi > 0:
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
 
         dict_data = {"cycle":self.cycle,"sequence_isi":self.sequence_isi,"isi":self.isi,
-                                                             "nb_standards":self.nb_standard,
+                     "nb_standards":self.nb_standard,
                      "nb_deviant_pitch":self.nb_deviant_pitch,
-                                                             "nb_deviant_rule":self.nb_deviant_rule}
+                     "nb_deviant_rule":self.nb_deviant_rule}
         df = pd.DataFrame.from_dict(dict_data, orient='index', columns=['values'], dtype=None)
         df = df.transpose()
-        print(df)
         return (all_sound,nb_element,df)

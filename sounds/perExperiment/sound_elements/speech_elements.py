@@ -19,22 +19,23 @@ class FrenchSyllable(Sound):
     force_duration : bool = True
     def __post_init__(self):
         self.name = self.__class__.__name__+"_"+self.syllable
-        voice = voxpopuli.Voice(speed=160, lang=self.lang,voice_id=self.voice_id)  # "es",voice_id=2
+        voice = voxpopuli.Voice(speed=self.speed, lang=self.lang,voice_id=self.voice_id)  # "es",voice_id=2
         pList = voice.to_phonemes(self.syllable)
         ## make sure there is no silence:
         to_keep = np.array([not p.name == "_" for p in pList],dtype=bool)
         old_duration = np.array([p.duration for p in pList])
         new_duration = old_duration / np.sum(old_duration[to_keep]) * self.duration
 
-        newPlist = []
-        for p, n, tokeep in zip(pList, new_duration, to_keep):
-            if tokeep:
-                p2 = p
-                if self.force_duration:
-                    p2.duration = n*1000 # the duration of phoneme is in milliseconds.
-                ## change to no pitch modifier:
-                p2.pitch_modifiers = self.pitch_modifiers
-                newPlist += [p2]
+        # newPlist = []
+        # for p, n, tokeep in zip(pList, new_duration, to_keep):
+        #     if tokeep:
+        #         p2 = p
+        #         if self.force_duration:
+        #             p2.duration = n*1000 # the duration of phoneme is in milliseconds.
+        #         ## change to no pitch modifier:
+        #         p2.pitch_modifiers = self.pitch_modifiers
+        #         newPlist += [p2]
+        newPlist = pList
         newPlist = voxpopuli.PhonemeList(newPlist)
         wav = voice.to_audio(newPlist)
         rate, wave_array = read(BytesIO(wav))
@@ -42,7 +43,7 @@ class FrenchSyllable(Sound):
         wave_array = wave_array / np.sqrt(np.mean(wave_array ** 2))
         if self.force_duration:
             self.sound = np.concatenate(
-                        [wave_array, np.zeros(int(self.duration * 16000) - wave_array.shape[0], dtype=wave_array.dtype)])
+                        [wave_array, np.zeros(int(self.duration * self.samplerate) - wave_array.shape[0], dtype=wave_array.dtype)])
         else:
             self.sound = wave_array
             self.duration = self.sound.shape[0]/self.samplerate
