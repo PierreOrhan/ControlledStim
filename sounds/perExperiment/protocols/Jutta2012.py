@@ -11,9 +11,9 @@ from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
 from dataclasses import dataclass
 import pandas as pd
 from typing import Union
-from julius import resample_frac
-import scipy.signal as signal
+import librosa
 import torch
+
 
 @dataclass
 class PitchRuleDeviant_1(Protocol_independentTrial):
@@ -38,9 +38,10 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         B_syllables = ["".join(a) for a in B_syllables]
         X_syllables = ["".join(a) for a in X_syllables]
         all_syllables = A_syllables + B_syllables + X_syllables
-        # sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
-        #           for a in all_syllables]
-        sounds = [Bip(samplerate=self.samplerate, duration=self.duration_tone, fs=[300, 800]) for a in all_syllables]
+        # AXB is the sound structure.
+        sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
+                  for a in all_syllables]
+        # sounds = [Bip(samplerate=self.samplerate, duration=self.duration_tone, fs=[300, 800]) for a in all_syllables]
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = SyllableTriplet(isi=self.isi)
 
@@ -54,6 +55,7 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             i_s1 = np.random.choice(2)
             i_s2 = np.random.choice(20)
             s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+2]]
+            # fi is always with to and le is always with bu
             all_pool.append(Sound_pool.from_list(s))
 
         for i in range(self.nb_deviant_rule):
@@ -61,8 +63,10 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             i_s2 = np.random.choice(20)
             if i_s1 == 0:
                 s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+3]]
+                # deviant rule: fi is with bu and le with to
             else:
                 s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+1]]
+                # second deviant rule
             all_pool.append(Sound_pool.from_list(s))
 
         for i in range(self.nb_deviant_pitch):
@@ -70,7 +74,13 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             i_s2 = np.random.choice(20)
             s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+2]]
             for j in range(len(s)):
-                s[j].sound = signal.resample(s[j].sound, int(len(s[j].sound) * 1.11))
+
+                ##TODO: heuristic to find the number of steps:
+                import librosa
+                nstep = np.log(1.11)/np.log(1.05946)
+                s[j].sound = librosa.effects.pitch_shift(s[j].sound,sr=s[j].samplerate
+                                                         ,n_steps=nstep,scale=True)
+                ## double check this part.
             all_pool.append(Sound_pool.from_list(s))
 
         all_pool = np.random.permutation(all_pool)
@@ -88,7 +98,8 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
 
         dict_data = {"cycle":self.cycle,"sequence_isi":self.sequence_isi,"isi":self.isi,
-                                                             "nb_standars":self.nb_standard,"nb_deviant_pitch":self.nb_deviant_pitch,
+                                                             "nb_standards":self.nb_standard,
+                     "nb_deviant_pitch":self.nb_deviant_pitch,
                                                              "nb_deviant_rule":self.nb_deviant_rule}
         df = pd.DataFrame.from_dict(dict_data, orient='index', columns=['values'], dtype=None)
         df = df.transpose()
