@@ -36,6 +36,12 @@ class Protocol_independentTrial(Protocol):
         sd = [s.sound for s in all_sound]
         names = [s.name for s in all_sound]
 
+        # # Waveform normalization independently of silences:
+        ## --> unecessary because the elements are all individually normalized....
+        # from sounds.perExperiment.sound_elements.tones_elements import Silence
+        # sd_not_silence = np.concatenate([all_sound[i].sound for i in np.where([type(s)!=Silence for s in all_sound])[0]])
+        # for i in np.where([type(s) != Silence for s in all_sound])[0]:
+        #     sd[i] = (sd[i]- np.mean(sd_not_silence))/np.std(sd_not_silence)
         # save the sound
         sd_out = np.concatenate(sd)
         os.makedirs(output_dir / "sounds", exist_ok=True)
@@ -84,6 +90,7 @@ class Protocol_independentTrial(Protocol):
         df["duration"] = sound_durations
         df["sound_info_path"] = sound_info_paths
         df["number_element"] = number_elements
+        df = df.join(pd.concat(trial_infos).set_axis(df.index))
         df.to_csv(Path(output_dir) / "trials.csv", index=False)
         return df
 
