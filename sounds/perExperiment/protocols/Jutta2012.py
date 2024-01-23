@@ -7,7 +7,7 @@ from sounds.perExperiment.sound_elements.speech_elements import FrenchSyllable
 from sounds.perExperiment.sound_elements.tones_elements import Bip
 from sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
-from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
+from sounds.perExperiment.sound_elements import ramp_sound,robust_normalize_sound,pitch_shift
 from dataclasses import dataclass
 import pandas as pd
 import copy
@@ -20,7 +20,7 @@ import torch
 class PitchRuleDeviant_1(Protocol_independentTrial):
     name : str = "PitchRuleDeviant_1"
     duration_tone : float = 0.250
-    samplerate : int = 16000#
+    samplerate : int = 16000
     sequence_isi : float = 0.700
     isi : float = 0.050
     nb_standard : int = 658
@@ -42,14 +42,14 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         # AXB is the sound structure.
         # sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
         #           for a in all_syllables]
-        sounds = [FrenchSyllable(samplerate=self.samplerate, syllable=a,force_duration=False,pitch_modifiers=[],voice_id=2)
+        sounds = [FrenchSyllable(samplerate=self.samplerate, syllable=a,force_duration=False,
+                                        pitch_modifiers=[],voice_id=2)
                                         for a in all_syllables]
         # sounds = [Bip(samplerate=self.samplerate, duration=self.duration_tone, fs=[300, 800]) for a in all_syllables]
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = SyllableTriplet(isi=self.isi)
 
-    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
-        ''' Trial implements the logic of the protocol for one trial.'''
+    def _getPoolAndSeq(self):
 
         ## Instantiate the vocabularies:
         all_pool = []
@@ -77,21 +77,20 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             i_s2 = np.random.choice(20)
             s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+2]]
             for j in range(len(s)):
-
-                ##TODO: heuristic to find the number of steps:
-                nstep = np.log(1.11)/np.log(1.05946)
-                newS = copy.deepcopy(s[j])
-                import pyrubberband.pyrb as pyrb
-                ## This requires to have installed rubberband
-                # as well as the rubberband-CLI
-                newS.sound = pyrb.pitch_shift(newS.sound,sr=s[j].samplerate
-                                                         ,n_steps=nstep)
+                newS = pitch_shift(s[j],ratio_pitch = 1.11)
+                newS.name += "_shifted"
                 s[j] = newS
                 ## double check this part.
             all_pool.append(Sound_pool.from_list(s))
 
         all_pool = np.random.permutation(all_pool)
         all_seq = [self.seq for _ in range(len(all_pool))]
+        return all_pool,all_seq
+
+    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
+        ''' Trial implements the logic of the protocol for one trial.'''
+
+        all_pool, all_seq = self._getPoolAndSeq()
 
         all_sound = []
         nb_element = 0

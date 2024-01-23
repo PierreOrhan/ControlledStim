@@ -45,7 +45,7 @@ class Protocol_independentTrial(Protocol):
         # save the sound
         sd_out = np.concatenate(sd)
         os.makedirs(output_dir / "sounds", exist_ok=True)
-        sf.write(Path(output_dir) / "sounds" / (name + ".wav"), sd_out, samplerate=self.samplerate)
+        sf.write(str(Path(output_dir) / "sounds" / (name + ".wav")), sd_out, samplerate=self.samplerate)
 
         durations = [s.duration for s in all_sound]
         start = np.cumsum([0.0] + durations[:-1])
