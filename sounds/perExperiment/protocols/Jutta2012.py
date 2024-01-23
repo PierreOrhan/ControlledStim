@@ -17,18 +17,17 @@ import torch
 
 @dataclass
 class PitchRuleDeviant_1(Protocol_independentTrial):
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.name = "PitchRuleDeviant_1"
-        self.duration_tone = 0.250
-        self.samplerate = 16000
-        self.sequence_isi = 0.700
-        self.isi = 0.050
-        self.nb_standard = 658
-        self.nb_deviant_pitch = 80
-        self.nb_deviant_rule = 80
-        self.cycle = 3
+    name : str = "PitchRuleDeviant_1"
+    duration_tone : float = 0.250
+    samplerate : int = 16000
+    sequence_isi : float = 0.700
+    isi : float = 0.050
+    nb_standard : int = 658
+    nb_deviant_pitch : int = 80
+    nb_deviant_rule : int = 80
+    cycle : int = 3
 
+    def __post_init__(self):
         A_syllables = np.array([["f", "i"], ["l", "e"]])
         B_syllables = np.array([["t", "o"], ["b", "u"]])
         X_syllables = np.array([["k", "a"], ["w", "e"], ["m", "i"], ["n", "o"], ["g", "u"], ["s", "a"],
@@ -44,32 +43,6 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         sounds = [Bip(samplerate=self.samplerate, duration=self.duration_tone, fs=[300, 800]) for a in all_syllables]
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = SyllableTriplet(isi=self.isi)
-
-    # name : str = "PitchRuleDeviant_1"
-    # duration_tone : float = 0.250
-    # samplerate : int = 16000
-    # sequence_isi : float = 0.700
-    # isi : float = 0.050
-    # nb_standard : int = 658
-    # nb_deviant_pitch : int = 80
-    # nb_deviant_rule : int = 80
-    # cycle : int = 3
-
-    # def __post_init__(self):
-    #     A_syllables = np.array([["f", "i"], ["l", "e"]])
-    #     B_syllables = np.array([["t", "o"], ["b", "u"]])
-    #     X_syllables = np.array([["k", "a"], ["w", "e"], ["m", "i"], ["n", "o"], ["g", "u"], ["s", "a"],
-    #                               ["m", "e"], ["r", "i"], ["r", "o"], ["k", "u"], ["m", "a"], ["k", "e"],
-    #                               ["g", "i"], ["k", "o"], ["s", "u"], ["w", "a"], ["x", "e"], ["k", "i"],
-    #                               ["s", "o"], ["m", "u"]])
-    #     A_syllables = ["".join(a) for a in A_syllables]
-    #     B_syllables = ["".join(a) for a in B_syllables]
-    #     X_syllables = ["".join(a) for a in X_syllables]
-    #     all_syllables = A_syllables + B_syllables + X_syllables
-    #     sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
-    #               for a in all_syllables]
-    #     self.sound_pool = Sound_pool.from_list(sounds)
-    #     self.seq = SyllableTriplet(isi=self.isi)
 
     def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
         ''' Trial implements the logic of the protocol for one trial.'''
