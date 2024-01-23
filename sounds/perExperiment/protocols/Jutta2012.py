@@ -4,6 +4,7 @@ import numpy as np
 
 from sounds.perExperiment.sequences.patterns import SyllableTriplet
 from sounds.perExperiment.sound_elements.speech_elements import EnglishSyllable
+from sounds.perExperiment.sound_elements.tones_elements import Bip
 from sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
 from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
@@ -11,6 +12,8 @@ from dataclasses import dataclass
 import pandas as pd
 from typing import Union
 from julius import resample_frac
+import scipy.signal as signal
+import torch
 
 @dataclass
 class PitchRuleDeviant_1(Protocol_independentTrial):
@@ -36,8 +39,9 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         B_syllables = ["".join(a) for a in B_syllables]
         X_syllables = ["".join(a) for a in X_syllables]
         all_syllables = A_syllables + B_syllables + X_syllables
-        sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
-                  for a in all_syllables]
+        # sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
+        #           for a in all_syllables]
+        sounds = [Bip(samplerate=self.samplerate, duration=self.duration_tone, fs=[300, 800]) for a in all_syllables]
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = SyllableTriplet(isi=self.isi)
 
@@ -92,11 +96,8 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             i_s1 = np.random.choice(2)
             i_s2 = np.random.choice(20)
             s = [self.sound_pool[i_s1],self.sound_pool[i_s2],self.sound_pool[i_s1+2]]
-            sr = s[0].samplerate
-            new_sr = int(sr * 1.11)
             for j in range(len(s)):
-                s[j].sound = resample_frac(s[j].sound, sr, new_sr)
-                s[j].samplerate = new_sr
+                s[j].sound = signal.resample(s[j].sound, int(len(s[j].sound) * 1.11))
             all_pool.append(Sound_pool.from_list(s))
 
         all_pool = np.random.permutation(all_pool)
@@ -113,6 +114,10 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
             if self.sequence_isi > 0:
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
 
-        return (all_sound,nb_element,pd.DataFrame.from_dict({"cycle":self.cycle,"sequence_isi":self.sequence_isi,"isi":self.isi,
+        dict_data = {"cycle":self.cycle,"sequence_isi":self.sequence_isi,"isi":self.isi,
                                                              "nb_standars":self.nb_standard,"nb_deviant_pitch":self.nb_deviant_pitch,
-                                                             "nb_deviant_rule":self.nb_deviant_rule}))
+                                                             "nb_deviant_rule":self.nb_deviant_rule}
+        df = pd.DataFrame.from_dict(dict_data, orient='index', columns=['values'], dtype=None)
+        df = df.transpose()
+        print(df)
+        return (all_sound,nb_element,df)
