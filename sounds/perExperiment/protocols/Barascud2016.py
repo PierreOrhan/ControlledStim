@@ -23,8 +23,9 @@ class RandRegRand(Protocol_independentTrial):
     tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
 
     def __post_init__(self):
-        sounds = [Bip(samplerate=self.samplerate,duration=self.duration_tone,fs=[f]) for f in self.tones_fs]
+        sounds = [Bip(name="Bip-"+str(idf),samplerate=self.samplerate,duration=self.duration_tone,fs=[f]) for idf,f in enumerate(self.tones_fs)]
         self.sound_pool = Sound_pool.from_list(sounds)
+        self.seqRand = ToneList(isi=self.isi,cycle=self.rand_voc)
         self.seq = ToneList(isi=self.isi, cycle=self.cycle)
 
     def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
@@ -34,11 +35,14 @@ class RandRegRand(Protocol_independentTrial):
         s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_voc))
         s_reg = Sound_pool.from_list(s_rand.pick_norepeat_n(self.cycle))
         s_randEnd = Sound_pool.from_list(s_reg.pick_norepeat_n(self.cycle))
-        ## We force the final random pool to start with a distinct element:
-        # TODO!!
+        ## Make sure the first random tone breaks the sequence:
+        if s_randEnd[0].first_freq==s_reg[-1].first_freq:
+            c=s_randEnd[1]
+            s_randEnd[1]=s_randEnd[0]
+            s_randEnd[0] = c
 
         all_pool = [s_rand]+[s_reg for _ in range(self.motif_repeat)] + [s_randEnd]
-        all_seq = [self.seq for _ in range(len(all_pool))]
+        all_seq = [self.seqRand] + [self.seq for _ in range(self.motif_repeat)] + [self.seq]
 
         all_sound = []
         nb_element = 0
@@ -52,5 +56,7 @@ class RandRegRand(Protocol_independentTrial):
                 all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
         # should be a list of Sound
         self.sound_pool.clear_picked()
-        return (all_sound,nb_element,pd.DataFrame.from_dict({"cycle":self.cycle,"sequence_isi":self.sequence_isi,"isi":self.isi,
-                                                             "motif_repeat":self.motif_repeat}))
+        return (all_sound,nb_element,pd.DataFrame.from_dict({"cycle":[self.cycle],
+                                                             "sequence_isi":[self.sequence_isi],
+                                                             "isi":[self.isi],
+                                                             "motif_repeat":[self.motif_repeat]}))

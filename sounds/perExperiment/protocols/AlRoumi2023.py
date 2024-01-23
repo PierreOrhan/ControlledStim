@@ -1,5 +1,4 @@
 import pandas as pd
-
 from sounds.perExperiment.sequences import lot_patterns,ToneList,Sequence,RandomPattern
 from sounds.perExperiment.sound_elements import Bip,Silence
 from sounds.perExperiment.sound_elements import Sound_pool,Sound
@@ -9,6 +8,67 @@ from dataclasses import dataclass,field
 import numpy as np
 from typing import Union,Tuple
 
+@dataclass
+class LOT(Protocol_independentTrial):
+    name : str = "Classical_LOT"
+    sequence_isi : float = 0.5
+    isi : float = 0.2
+    duration_tone : float = 0.05
+    samplerate : int = 16000
+    motif_repeat : int = 10
+    lot_seq : str = "pairs"
+    tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.name = self.name+"_"+self.lot_seq
+        sounds = [Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=[f]) for
+                  idf, f in enumerate(self.tones_fs)]
+        self.sound_pool = Sound_pool.from_list(sounds)
+        # Note: naming the bip is useful to know who is where.
+        self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
+
+    def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
+        ## Instantiate the vocabularies:
+        s_reg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(2))
+        all_pool = [s_reg for _ in range(self.motif_repeat)]
+        all_seq = [self.regSeq for _ in range(self.motif_repeat)]
+        return all_pool,all_seq
+
+    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
+        ''' Trial implements the logic of the protocol for one trial.'''
+        all_pool, all_seq = self._getPoolAndSeq()
+        all_sound = []
+        nb_element = 0
+        for p,seq in zip(all_pool, all_seq):
+            s_p = seq(p) # combine sequence and pool
+            ## Apply sound modifications:
+            s_p = [normalize_sound(ramp_sound(s,cosine_rmp_length=0.005)) for s in s_p]
+            all_sound += s_p
+            nb_element += np.sum([type(s)!= Silence for s in s_p])
+            if self.sequence_isi > 0:
+                all_sound += [Silence(samplerate=self.samplerate, duration=self.sequence_isi)]
+        # should be a list of Sound
+        self.sound_pool.clear_picked()
+        ### Further returns additional trial information to be stored:
+        df_info = pd.DataFrame.from_dict({"isi":[self.isi],"sequence_isi":[self.sequence_isi],"lot_seq":[self.lot_seq]})
+        return (all_sound,nb_element,df_info)
+
+@dataclass
+class LOT_generalize(LOT):
+    ### Same as LOT but at each repetition of the motif we vary the set of tones used:
+    def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
+        ## Instantiate the vocabularies:
+        all_pool = []
+        for i in range(self.motif_repeat):
+            s_reg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(2))
+            all_pool += [s_reg]
+            if (i+1)*2>= len(self.sound_pool):
+                # we have used all available tones and reinitialize all the possible pairs to choose from
+                self.sound_pool.clear_picked()
+        all_seq = [self.regSeq for _ in range(self.motif_repeat)]
+        return all_pool,all_seq
+
+#### Similar protocol but adapted to fit a Random-Regular-Random organization:
 @dataclass
 class RandRegRand_LOT(Protocol_independentTrial):
     name : str = "RandRegRand_LOT"
@@ -27,7 +87,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
         self.name = self.name+"_"+self.lot_seq
         sounds = [Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=[f]) for
                   idf, f in enumerate(self.tones_fs)]
-        # Note: naming the bip is useful to one who is where.
+        # Note: naming the bip is useful to know who is where.
         self.sound_pool = Sound_pool.from_list(sounds)
         self.randSeq = ToneList(isi=self.isi, cycle=16)
         self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
@@ -46,6 +106,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
             all_pool = [s_rand] + [s_reg for _ in range(self.motif_repeat)] + [s_reg]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.randSeqEnd]
         return all_pool,all_seq
+
     def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
         ''' Trial implements the logic of the protocol for one trial.'''
         all_pool, all_seq = self._getPoolAndSeq()
