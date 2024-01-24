@@ -2,6 +2,7 @@ import dataclasses
 import copy
 import numpy as np
 from dataclasses import dataclass,field
+from parselmouth import Sound as ParselmouthSound
 
 @dataclass(frozen=False)
 class Sound:
