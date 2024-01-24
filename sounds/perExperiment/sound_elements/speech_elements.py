@@ -16,13 +16,16 @@ class FrenchSyllable(Sound):
     """ Generate syllable with a French voice at a given speed using MRBOLA+ESPEAK synthesizer from the voxpopuli package."""
     syllable : str = field(default="tu")
     speed : int = 160
+    pitch_mod : int = 40 #varies between 1 and 99, I don't understand this command
     lang : str = "fr"
     voice_id : int = 1
     pitch_modifiers : list[Tuple[float,float]] = field(default_factory=list)
     force_duration : bool = True
     def __post_init__(self):
         self.name = self.__class__.__name__+"_"+self.syllable
-        voice = voxpopuli.Voice(speed=self.speed, lang=self.lang,voice_id=self.voice_id)  # "es",voice_id=2
+        voice = voxpopuli.Voice(speed=self.speed,
+                                pitch=self.pitch_mod,
+                                lang=self.lang,voice_id=self.voice_id)  # "es",voice_id=2
         pList = voice.to_phonemes(self.syllable)
         ## make sure there is no silence:
         to_keep = np.array([not p.name == "_" for p in pList],dtype=bool)

@@ -4,7 +4,7 @@ from sounds.utils import get_input_lengths
 import soundfile as sf
 import numpy as np
 
-def mask_and_latent(sequence_data_set_dir: str, oneEvalPerEvent: bool = True):
+def mask_and_latent(sequence_data_set_dir: str):
     """Preprocessing for self-supervised learning. Masking elements for contrastive learning using wav2vec2.
     Args:
         sequence_data_set_dir (str): Path to the sequence data set directory.
@@ -117,7 +117,7 @@ def mask_and_latent(sequence_data_set_dir: str, oneEvalPerEvent: bool = True):
 
 
 
-def mask_and_latent_BalancedNegatives(sequence_data_set_dir: str, oneEvalPerEvent: bool = True):
+def mask_and_latent_BalancedNegatives(sequence_data_set_dir: str):
     """Preprocessing for self-supervised learning. Masking elements for contrastive learning using wav2vec2.
         Negatives strategy:
 

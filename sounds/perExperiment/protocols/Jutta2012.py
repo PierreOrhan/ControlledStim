@@ -7,7 +7,7 @@ from sounds.perExperiment.sound_elements.speech_elements import FrenchSyllable
 from sounds.perExperiment.sound_elements.tones_elements import Bip
 from sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
 from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
-from sounds.perExperiment.sound_elements import ramp_sound,robust_normalize_sound,pitch_shift
+from sounds.perExperiment.sound_elements import ramp_sound,pitch_shift
 from dataclasses import dataclass
 import pandas as pd
 import copy
@@ -42,9 +42,9 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
         # AXB is the sound structure.
         # sounds = [EnglishSyllable(samplerate=self.samplerate, duration=self.duration_tone, syllable=a)
         #           for a in all_syllables]
-        sounds = [FrenchSyllable(samplerate=self.samplerate, syllable=a,force_duration=False,
-                                        pitch_modifiers=[],voice_id=2)
-                                        for a in all_syllables]
+        sounds = [FrenchSyllable(samplerate=self.samplerate, syllable=a,
+                                 force_duration=False,
+                                 pitch_modifiers=[],voice_id=2) for a in all_syllables]
         # sounds = [Bip(samplerate=self.samplerate, duration=self.duration_tone, fs=[300, 800]) for a in all_syllables]
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = SyllableTriplet(isi=self.isi)

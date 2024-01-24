@@ -1,3 +1,4 @@
+import librosa
 import numpy as np
 import pandas as pd
 from sounds.perExperiment.sequences import ToneList
@@ -25,14 +26,15 @@ class AXCSyllableStream(Protocol_independentTrial):
         ## Remark: the authors have two additional controls over this experiment.
 
         # AXC stimulis:
-        family1 = [["pu","li","ki"],["pu","Ra","ki"],["pu","fo","ki"]]
-        family2 = [["be","li","ga"],["be","Ra","ga"],["be","fo","ga"]]
-        family3 = [["ta","li","du"],["ta","Ra","du"],["ta","fo","du"]]
+        family1 = [["pu","li","ki"],["pu","ra","ki"],["pu","fo","ki"]]
+        family2 = [["be","li","ga"],["be","ra","ga"],["be","fo","ga"]]
+        family3 = [["ta","li","du"],["ta","ra","du"],["ta","fo","du"]]
 
         self.familyPool = []
         for fam in [family1,family2,family3]:
             sounds = [[FrenchSyllable(samplerate=self.samplerate,duration=self.duration_tone,
-                                     syllable=p,voice_id=2,pitch_modifiers=[(1.0,200.0)]
+                                     syllable=p,voice_id=2
+                                      # pitch_modifiers=[(100.0,200.0)]
                                       ,force_duration=False) for p in f] for f in fam]
 
             # Pitch modifiers for the totality of the sound, targeting a pitch of 200Hz
@@ -64,7 +66,7 @@ class AXCSyllableStream(Protocol_independentTrial):
         for f,w in zip(family_sequences, word_samples):
             s_p = self.familyPool[f][w]
             ## Apply sound modifications:
-            s_p = [normalize_sound(ramp_sound(s)) for s in s_p]
+            s_p = [ramp_sound(s,cosine_rmp_length=0.1) for s in s_p]
             all_sound += s_p
             nb_element += np.sum([type(s)!= Silence for s in s_p])
             if self.sequence_isi > 0:
@@ -93,7 +95,8 @@ class AXCSyllableStream_exp1(AXCSyllableStream):
         for pw in pw1+pw2:
             sounds = [FrenchSyllable(samplerate=self.samplerate,duration=self.duration_tone,
                                      syllable=p,voice_id=2,
-                                      pitch_modifiers=[(1.0,200.0)],force_duration=False) for p in pw]
+                                      pitch_modifiers=[],
+                                     force_duration=False) for p in pw]
             # Pitch modifiers for the totality of the sound, targeting a pitch of 200Hz
             self.partWordPool += [sounds]
 
@@ -106,10 +109,10 @@ class AXCSyllableStream_exp1(AXCSyllableStream):
         sounds = []
         nb_elements = 0
         for pw,wf,w in zip(pws,wordsFams,words):
-            sounds += [normalize_sound(ramp_sound(s,cosine_rmp_length=0.02)) for s in self.partWordPool[pw]]
+            sounds += [ramp_sound(s,cosine_rmp_length=0.005) for s in self.partWordPool[pw]]
             sounds += [Silence(duration=0.5,samplerate=self.samplerate)]
             nb_elements += 3
-            sounds += [normalize_sound(ramp_sound(s,cosine_rmp_length=0.02)) for s in self.familyPool[wf][w]]
+            sounds += [ramp_sound(s,cosine_rmp_length=0.005) for s in self.familyPool[wf][w]]
             sounds += [Silence(duration=2,samplerate=self.samplerate)]
             nb_elements += 3
         return sounds,nb_elements
