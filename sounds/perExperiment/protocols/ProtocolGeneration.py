@@ -207,24 +207,18 @@ class Protocol_TrainTest(Protocol):
         return df
 
 
-
-# class Protocol:
-#     def __init__(self, name: str, sequence_isi: float):
-#         self.name = name
-#         self.sequence_isi = sequence_isi
-#
-#     def create(self, soundseq_dataset_csv: str):
-#         df = pd.read_csv(soundseq_dataset_csv, index_col=False)
-#         ann_dict = {
-#             "audio_data": [],
-#             "sample_rate": [],
-#             "label": []
-#         }
-#         for seq in protocol_name_to_sequences[self.name]:
-#             data, sr = sf.read(df[df["name"] == seq]["wav_path"].values[0])
-#             ann_dict["audio_data"].append(data)
-#             ann_dict["sample_rate"].append(sr)
-#             ann_dict["label"].append(seq)
-#
-#         ann_dataset = Dataset.from_dict(ann_dict)
-#         return ann_dataset
+# class Protocol_TrialWithMemory(Protocol_independentTrial):
+#     ## Instead of calling _trial, these protocol should
+#     # implement a frozetrial method
+#     # such as to create dependence between successive calls to the trial
+#     # generator.
+#     @abstractmethod
+#     def _trial_with_memory(self) -> tuple[list[Sound],int,pd.DataFrame]:
+#         # Should return the list of Sound
+#         # as well as the number of sound which are not Silence (number_element)
+#         # Finally, it should return a pandas dataFrame which contains additional information
+#         # to be able to easily sort trials.
+#         raise Exception("method to subclass")
+#     @abstractmethod
+#     def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
+#         return self._trial_with_memory()

@@ -45,7 +45,7 @@ class Bip_randPitch(Sound):
         self.sound = bip_randomPitch(self.samplerate,self.duration,self.fs)
 
 def bip(samplerate: int,duration: float,fs: Union[list[float],np.ndarray]):
-    return np.sum(np.stack([librosa.tone(f, sr=samplerate, duration=duration) for f in fs],
+    return np.mean(np.stack([librosa.tone(f, sr=samplerate, duration=duration) for f in fs],
                  axis=0),axis=0)
 @dataclass
 class Bip(Sound):

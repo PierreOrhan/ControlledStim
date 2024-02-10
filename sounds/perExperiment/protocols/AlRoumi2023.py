@@ -17,11 +17,12 @@ class LOT(Protocol_independentTrial):
     samplerate : int = 16000
     motif_repeat : int = 10
     lot_seq : str = "pairs"
-    tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
+    tones_fs : Union[list[list[float]],np.ndarray] = field(default_factory=list)
 
+    s_reg : list[Sound] = field(default=None)
     def __post_init__(self):
         self.name = self.name+"_"+self.lot_seq
-        sounds = [Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=[f]) for
+        sounds = [Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=f) for
                   idf, f in enumerate(self.tones_fs)]
         self.sound_pool = Sound_pool.from_list(sounds)
         # Note: naming the bip is useful to know who is where.
@@ -29,7 +30,10 @@ class LOT(Protocol_independentTrial):
 
     def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
         ## Instantiate the vocabularies:
-        s_reg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(2))
+        if self.s_reg is None:
+            s_reg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(2))
+        else:
+            s_reg = self.s_reg
         all_pool = [s_reg for _ in range(self.motif_repeat)]
         all_seq = [self.regSeq for _ in range(self.motif_repeat)]
         return all_pool,all_seq
@@ -42,7 +46,7 @@ class LOT(Protocol_independentTrial):
         for p,seq in zip(all_pool, all_seq):
             s_p = seq(p) # combine sequence and pool
             ## Apply sound modifications:
-            s_p = [normalize_sound(ramp_sound(s,cosine_rmp_length=0.005)) for s in s_p]
+            s_p = [ramp_sound(s,cosine_rmp_length=0.005) for s in s_p]
             all_sound += s_p
             nb_element += np.sum([type(s)!= Silence for s in s_p])
             if self.sequence_isi > 0:
@@ -67,6 +71,77 @@ class LOT_generalize(LOT):
                 self.sound_pool.clear_picked()
         all_seq = [self.regSeq for _ in range(self.motif_repeat)]
         return all_pool,all_seq
+
+@dataclass
+class LOT_deviant(LOT):
+    deviant :int =-1 # to choose the deviant index
+    is_complementary : bool = False # to invert the sequence' tones
+    s_reg : list[Sound] = field(default=None)
+    id_lot_seq : int = 0
+    base_name : str = field(init=False)
+    def __post_init__(self):
+        super(LOT_deviant,self).__post_init__()
+        self.id_lot_seq = 0
+        self.lot_seq = list(lot_patterns.keys())[self.id_lot_seq]
+        self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
+        self.devSeq = lot_patterns[self.lot_seq](isi=self.isi)
+        if self.deviant >= 0:
+            self.devSeq.as_deviant_pattern(self.deviant)
+        self.base_name = self.name
+        self.name = self.base_name + self.lot_seq
+    def _trial(self) -> tuple[list[Sound],int,pd.DataFrame]:
+        ## A trial function implementing some memory
+        # such that for every two tones, we generate every sequence with every possible deviant combinations
+        assert self.regSeq.__class__ == self.devSeq.__class__
+        if self.s_reg is None:
+            all_pool,all_seq = self._getPoolAndSeq()
+            self.s_reg = all_pool[0]
+
+        all_sound, nb_element, df_info = super(LOT_deviant,self)._trial()
+        df_info["deviantId"] = self.deviant
+        if self.deviant!=-1:
+            df_info["deviantpos"] = self.devSeq.deviant_pos[self.deviant]
+        df_info["is_complementary"] = self.is_complementary
+
+        # update the deviant:
+        self.deviant += 1
+        if self.deviant >= 0 and self.deviant < 4:
+            self.devSeq = lot_patterns[self.lot_seq](isi=self.isi)
+            self.devSeq.as_deviant_pattern(self.deviant)
+        elif self.deviant >= 4 and self.is_complementary:
+            self.deviant = -1
+
+            self.is_complementary = False
+            if self.id_lot_seq == len(list(lot_patterns.keys())) - 1: # reinitialize the protocol
+                self.s_reg = None
+                self.id_lot_seq = 0
+                self.lot_seq = list(lot_patterns.keys())[self.id_lot_seq]
+                self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
+                self.devSeq = lot_patterns[self.lot_seq](isi=self.isi)
+
+                self.name = self.base_name + self.lot_seq
+            else:
+                self.id_lot_seq += 1
+                self.lot_seq = list(lot_patterns.keys())[self.id_lot_seq]
+                self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
+                self.devSeq = lot_patterns[self.lot_seq](isi=self.isi)
+                self.name =  self.base_name + self.lot_seq
+        elif self.deviant >= 4 and not self.is_complementary:
+            self.is_complementary = True
+            self.deviant = -1
+            self.devSeq = lot_patterns[self.lot_seq](isi=self.isi)
+            self.s_reg = self.s_reg[::-1]  ## complementary sequence
+        return (all_sound, nb_element, df_info)
+    def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
+        ## Instantiate the vocabularies:
+        if self.s_reg is None:
+            s_reg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(2))
+        else:
+            s_reg = self.s_reg
+        all_pool = [s_reg for _ in range(self.motif_repeat)]
+        all_seq = [self.regSeq for _ in range(self.motif_repeat-1)] +[self.devSeq]
+        return all_pool,all_seq
+
 
 #### Similar protocol but adapted to fit a Random-Regular-Random organization:
 @dataclass
