@@ -38,7 +38,7 @@ class Protocol_independentTrial(Protocol):
 
         # save the sound
         sd_out = np.concatenate(sd)
-        os.makedirs(output_dir / "sounds", exist_ok=True)
+        os.makedirs(Path(output_dir) / "sounds", exist_ok=True)
         sf.write(Path(output_dir) / "sounds" / (name + ".wav"), sd_out, samplerate=self.samplerate)
 
         durations = [s.duration for s in all_sound]
@@ -47,7 +47,7 @@ class Protocol_independentTrial(Protocol):
         df_sound_info["name"] = names
         df_sound_info["start"] = np.array(start)
         df_sound_info["duration"] = durations
-        os.makedirs(output_dir / "sound_info", exist_ok=True)
+        os.makedirs(Path(output_dir) / "sound_info", exist_ok=True)
         df_sound_info.to_csv(Path(output_dir) / "sound_info" / (name + ".csv"), index=False)
         return sd_out
 

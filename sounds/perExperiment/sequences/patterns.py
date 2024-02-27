@@ -82,6 +82,7 @@ class SparseCommunityGraph(FullCommunityGraph):
     nb_nodes : int = 12
     walk_length : int = 16
     graph : np.ndarray = field(init=False)
+
     def __post_init__(self):
         ## The graph is represented as an adjency matrix:
         communityA = np.array([[0,0,1,1,1,0],[0,0,1,1,1,1],[1,1,0,1,1,0],[1,1,1,0,0,1],[1,1,1,0,0,1],[0,1,0,1,1,0]],dtype=bool)
