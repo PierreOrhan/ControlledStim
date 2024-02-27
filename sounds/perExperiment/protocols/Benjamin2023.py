@@ -15,7 +15,7 @@ class Benjamin2023(Protocol_independentTrial):
     duration_tone : float = 0.275
     samplerate : int = 16000
     isi : float = 0.1
-    walk_length : int = 30
+    walk_length : int = 50
     tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
 
     def __post_init__(self):
