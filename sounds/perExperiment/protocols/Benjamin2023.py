@@ -14,8 +14,8 @@ class Benjamin2023(Protocol_independentTrial):
     name : str = "HigherGraph"
     duration_tone : float = 0.275
     samplerate : int = 16000
-    isi : float = 0.1
-    walk_length : int = 50
+    isi : float = 0.05
+    walk_length : int = 100
     tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
 
     def __post_init__(self):
