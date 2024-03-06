@@ -1,7 +1,7 @@
 import voxpopuli
 import numpy as np
 from dataclasses import dataclass,field
-from sounds.perExperiment.sound_elements import Sound
+from ControlledStim.sounds import Sound
 from scipy.io.wavfile import read, write
 from io import BytesIO
 import torch

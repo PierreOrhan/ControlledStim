@@ -1,19 +1,12 @@
-from abc import ABC
-
 import numpy as np
 
-from sounds.perExperiment.sequences.patterns import SyllableTriplet
-from sounds.perExperiment.sound_elements.speech_elements import FrenchSyllable
-from sounds.perExperiment.sound_elements.tones_elements import Bip
-from sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
-from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
-from sounds.perExperiment.sound_elements import ramp_sound,pitch_shift
+from ControlledStim.sounds import SyllableTriplet
+from ControlledStim.sounds import FrenchSyllable
+from ControlledStim.sounds import Sound_pool,Sound,Silence
+from ControlledStim.sounds import Protocol_independentTrial
+from ControlledStim.sounds import ramp_sound,pitch_shift
 from dataclasses import dataclass
 import pandas as pd
-import copy
-from typing import Union
-import librosa
-import torch
 
 
 @dataclass

@@ -1,5 +1,5 @@
 .idea
-sounds/test_data
-sounds/data
+ControlledStim/sounds/test_data
+ControlledStim/sounds/data
 __pycache__
 ```

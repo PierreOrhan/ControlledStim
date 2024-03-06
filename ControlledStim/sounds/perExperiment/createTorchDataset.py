@@ -24,10 +24,10 @@ def load_ANNdataset_withMask(dataset_dir : Path,partially_causal = True,extendWi
             sd,sr = sf.read(sequence["wav_path"])
             zg = zr.open_group(sequence["mask_info_path"],mode="r")
             if extendWithMask:
-                mti = zg["mask_time_indices"][shard, ...]
-                sni = zg["sampled_negative_indices"][shard, ...]
+                mti = zg["mask_time_indices"][...]
+                sni = zg["sampled_negative_indices"][...]
                 if "latent_time_reduction" in zg.keys():
-                    ltr = zg["latent_time_reduction"][shard, ...]
+                    ltr = zg["latent_time_reduction"][...]
                     has_ltr = True
                 else:
                     has_ltr = False

@@ -1,4 +1,4 @@
-from sounds.perExperiment.sound_elements.sound_class import Sound
+from ControlledStim.sounds import Sound
 import numpy as np
 import librosa
 from  dataclasses import dataclass,field

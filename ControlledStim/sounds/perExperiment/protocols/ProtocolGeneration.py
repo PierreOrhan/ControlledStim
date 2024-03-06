@@ -3,7 +3,7 @@ from typing import Union
 import numpy as np
 import soundfile as sf
 import pandas as pd
-from sounds.perExperiment.sound_elements import Sound
+from ControlledStim.sounds import Sound
 from dataclasses import dataclass,field
 from pathlib import Path
 from abc import abstractmethod,ABC

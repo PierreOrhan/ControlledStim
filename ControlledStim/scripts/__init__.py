@@ -1,6 +1,3 @@
-from sounds.perExperiment import LocalGlobal
-
-
 # dirWav = "/Users/juliengadonneix/Desktop/code/LongProject/LocalGlobal/stimsWav"
 # dirZarr = "/Users/juliengadonneix/Desktop/code/LongProject/LocalGlobal/stimsZarr"
 # LocalGlobal.RandReg_structure.generateSounds(dirWav=dirWav,dirZarr=dirZarr)

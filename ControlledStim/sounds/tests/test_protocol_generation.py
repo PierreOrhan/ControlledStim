@@ -1,5 +1,4 @@
-import sounds.perExperiment.ProtocolGeneration as PG
-import sounds.experimentsClass.element_masking as EM
+from ControlledStim import sounds as PG, sounds as EM
 import pathlib
 
 data_dir = str(pathlib.Path(__file__).parent.parent.absolute() / "data")

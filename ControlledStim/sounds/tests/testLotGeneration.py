@@ -3,10 +3,10 @@ import os
 import numpy as np
 from pathlib import Path
 
-from sounds.perExperiment.protocols.AlRoumi2023 import RandRegRand_LOT,RandRegRand_LOT_deviant,RandRegRand_LOT_orig
-from sounds.perExperiment.protocols.ProtocolGeneration import ListProtocol_independentTrial
+from ControlledStim.sounds import RandRegRand_LOT,RandRegRand_LOT_deviant,RandRegRand_LOT_orig
+from ControlledStim.sounds import ListProtocol_independentTrial
 
-output_dir = Path("/media/pierre/NeuroData2/datasets/lot_testGeneration") / "test_randregrand"
+output_dir = Path("/Users/juliengadonneix/Desktop/code/LongProject/Barascud2016") / "test_randregrand"
 
 # r1= RandRegRand_LOT(lot_seq="pairs",tones_fs=np.logspace(np.log(50),np.log(400),num=50),
 #                    motif_repeat=10,isi=0,sequence_isi=0.2)
@@ -17,11 +17,11 @@ output_dir = Path("/media/pierre/NeuroData2/datasets/lot_testGeneration") / "tes
 
 ### Debugging: We fix the pool and repeat the probing over and over
 import pandas as pd
-from sounds.perExperiment.sequences import lot_patterns,ToneList,Sequence,RandomPattern
-from sounds.perExperiment.sound_elements import Bip,Silence
-from sounds.perExperiment.sound_elements import Sound_pool,Sound
-from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
-from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
+from ControlledStim.sounds import lot_patterns,ToneList,Sequence,RandomPattern
+from ControlledStim.sounds import Bip,Silence
+from ControlledStim.sounds import Sound_pool,Sound
+from ControlledStim.sounds import Protocol_independentTrial
+from ControlledStim.sounds import ramp_sound,normalize_sound
 from dataclasses import dataclass,field
 import numpy as np
 from typing import Union,Tuple
@@ -68,5 +68,5 @@ for idfreq_high,freq_high in enumerate(tones_fs[::2]):
 
 lp = ListProtocol_independentTrial(rs)
 lp.generate(n_trial=1,output_dir=output_dir)
-from sounds.experimentsClass.element_masking import mask_and_latent_BalancedNegatives
+from ControlledStim.sounds import mask_and_latent_BalancedNegatives
 mask_and_latent_BalancedNegatives(str(output_dir))

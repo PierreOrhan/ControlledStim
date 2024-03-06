@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from sounds.utils import get_input_lengths
+from ControlledStim.sounds import get_input_lengths
 import soundfile as sf
 import numpy as np
 

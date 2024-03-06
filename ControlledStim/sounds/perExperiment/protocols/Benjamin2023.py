@@ -1,10 +1,10 @@
 import numpy as np
 
-from sounds.perExperiment.sequences import FullCommunityGraph
-from sounds.perExperiment.sound_elements import FrenchSyllable,Bip,Silence
-from sounds.perExperiment.sound_elements import Sound_pool,Sound
-from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
-from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
+from ControlledStim.sounds import FullCommunityGraph
+from ControlledStim.sounds import FrenchSyllable,Bip,Silence
+from ControlledStim.sounds import Sound_pool,Sound
+from ControlledStim.sounds import Protocol_independentTrial
+from ControlledStim.sounds import ramp_sound,normalize_sound
 from dataclasses import dataclass,field
 import pandas as pd
 from typing import Union

@@ -1,5 +1,5 @@
 import numpy as np
-from sounds.perExperiment.sequences import Sequence
+from ControlledStim.sounds import Sequence
 from dataclasses import dataclass,field
 from typing import Iterable
 ## Note: I am not convinced this is the best way to do things...

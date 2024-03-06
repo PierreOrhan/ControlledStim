@@ -1,11 +1,11 @@
 import librosa
 import numpy as np
 import pandas as pd
-from sounds.perExperiment.sequences import ToneList
-from sounds.perExperiment.sound_elements import Silence,FrenchSyllable
-from sounds.perExperiment.sound_elements import Sound_pool,Sound
-from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
-from sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
+from ControlledStim.sounds import ToneList
+from ControlledStim.sounds import Silence,FrenchSyllable
+from ControlledStim.sounds import Sound_pool,Sound
+from ControlledStim.sounds import Protocol_independentTrial
+from ControlledStim.sounds import ramp_sound,normalize_sound
 from dataclasses import dataclass,field
 
 from typing import Union,Tuple

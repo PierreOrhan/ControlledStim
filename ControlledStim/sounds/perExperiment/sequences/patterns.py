@@ -1,6 +1,6 @@
 import numpy as np
 
-from sounds.perExperiment.sequences import Sequence
+from ControlledStim.sounds import Sequence
 from dataclasses import dataclass,field
 
 ## Question: what is the advantage of subclassing the Sequence object?
