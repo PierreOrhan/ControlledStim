@@ -1,3 +1,4 @@
-from sounds.perExperiment.sound_elements.sound_class import Sound,Sound_pool,ramp_sound,normalize_sound
+from sounds.perExperiment.sound_elements.sound_class import Sound,Sound_pool
+from sounds.perExperiment.sound_elements.sound_class import ramp_sound,normalize_sound,pitch_shift
 from sounds.perExperiment.sound_elements.tones_elements import Bip,Bip_randPitch,gaussian_N,Silence
 from sounds.perExperiment.sound_elements.speech_elements import FrenchSyllable

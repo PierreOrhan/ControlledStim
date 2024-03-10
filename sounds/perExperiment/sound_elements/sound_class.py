@@ -26,13 +26,35 @@ def ramp_sound(s:Sound,cosine_rmp_length:float = 0.005) -> Sound:
     return newS
 
 def normalize_sound(s:Sound) -> Sound:
-    # warning: modify in place the sounds.
     if np.sum(s.sound**2)!=0:
         newS = copy.deepcopy(s)
-        newS.sound = newS.sound / np.sqrt(np.sum(newS.sound ** 2, axis=-1, keepdims=True))
+        newS.sound = (newS.sound - np.mean(newS.sound,axis=-1,keepdims=True))/ np.std(newS.sound, axis=-1, keepdims=True)
         return newS
     else:
         return s
+
+from typing import Optional
+def pitch_shift(s:Sound,pitch_orig: Optional[float]=None,
+                pitch_target:Optional[float]=None,
+                ratio_pitch:Optional[float]=None) -> Sound:
+    # Performs pitch shiffting using the pyrubberband package
+    ## This requires to have installed rubberband
+    # as well as the rubberband-CLI
+    # Note:
+    # On linux the steps are: install meson,
+    # then install rubberband code (download and compile)
+    # then sudo apt-get install rubberband-cli
+
+    import pyrubberband.pyrb as pyrb
+    if ratio_pitch is None:
+        assert  pitch_target is not None
+        assert pitch_orig is not None
+        ratio_pitch = pitch_target/pitch_orig
+    nstep = np.log(ratio_pitch) / np.log(1.05946)
+    newS = copy.deepcopy(s)
+    newS.sound = pyrb.pitch_shift(newS.sound, sr=s.samplerate
+                                  , n_steps=nstep)
+    return newS
 
 
 @dataclass(frozen=False)
