@@ -6,7 +6,7 @@ from pathlib import Path
 from sounds.perExperiment.protocols.AlRoumi2023 import RandRegRand_LOT,RandRegRand_LOT_deviant,RandRegRand_LOT_orig
 from sounds.perExperiment.protocols.ProtocolGeneration import ListProtocol_independentTrial
 
-output_dir = Path("/media/pierre/NeuroData2/datasets/lot_testGeneration") / "test_randregrand"
+output_dir = Path("/Users/Emile/PycharmProjects/ControlledStim/sounds/data") / "test_randregrand"
 
 # r1= RandRegRand_LOT(lot_seq="pairs",tones_fs=np.logspace(np.log(50),np.log(400),num=50),
 #                    motif_repeat=10,isi=0,sequence_isi=0.2)

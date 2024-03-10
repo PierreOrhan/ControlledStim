@@ -44,8 +44,8 @@ class Protocol_independentTrial(Protocol):
         #     sd[i] = (sd[i]- np.mean(sd_not_silence))/np.std(sd_not_silence)
         # save the sound
         sd_out = np.concatenate(sd)
-        os.makedirs(output_dir / "sounds", exist_ok=True)
-        sf.write(str(Path(output_dir) / "sounds" / (name + ".wav")), sd_out, samplerate=self.samplerate)
+        os.makedirs(Path(output_dir) / "sounds", exist_ok=True)
+        sf.write(Path(output_dir) / "sounds" / (name + ".wav"), sd_out, samplerate=self.samplerate)
 
         durations = [s.duration for s in all_sound]
         start = np.cumsum([0.0] + durations[:-1])
@@ -53,7 +53,7 @@ class Protocol_independentTrial(Protocol):
         df_sound_info["name"] = names
         df_sound_info["start"] = np.array(start)
         df_sound_info["duration"] = durations
-        os.makedirs(output_dir / "sound_info", exist_ok=True)
+        os.makedirs(Path(output_dir) / "sound_info", exist_ok=True)
         df_sound_info.to_csv(Path(output_dir) / "sound_info" / (name + ".csv"), index=False)
         return sd_out
 
@@ -154,7 +154,7 @@ class Protocol_TrainTest(Protocol):
         # save the sound
         sd_out = np.concatenate(sd)
         os.makedirs(output_dir / "sounds", exist_ok=True)
-        sf.write(Path(output_dir) / "sounds" / (name + ".wav"), sd_out, samplerate=self.samplerate)
+        sf.write(Path(output_dir) / "sounds" / (name +  ".wav"), sd_out, samplerate=self.samplerate)
 
         durations = [s.duration for s in all_sound]
         start = np.cumsum([0.0] + durations[:-1])
