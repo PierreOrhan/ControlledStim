@@ -15,7 +15,6 @@ output_dir = Path("/Users/Emile/PycharmProjects/ControlledStim/sounds/data") / "
 # seq_isi = 0.5
 # isi = 0.2
 
-### Debugging: We fix the pool and repeat the probing over and over
 import pandas as pd
 from sounds.perExperiment.sequences import lot_patterns,ToneList,Sequence,RandomPattern
 from sounds.perExperiment.sound_elements import Bip,Silence
