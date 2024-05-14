@@ -115,7 +115,7 @@ def mask_and_latent(sequence_data_set_dir: str):
     # update the dataset info csv:
     sequences.to_csv(sequence_data_set_dir + "/trials.csv")
 
-
+import tqdm
 
 def mask_and_latent_BalancedNegatives(sequence_data_set_dir: str):
     """Preprocessing for self-supervised learning. Masking elements for contrastive learning using wav2vec2.
@@ -135,7 +135,7 @@ def mask_and_latent_BalancedNegatives(sequence_data_set_dir: str):
 
     # Load the sequence data set
     sequences = pd.read_csv(sequence_data_set_dir + "/trials.csv")
-    for seq in range(sequences.shape[0]):
+    for seq in tqdm.tqdm(range(sequences.shape[0]),desc="across sounds"):
         sequence = sequences.iloc[seq, :]
         sequence_info = pd.read_csv(sequence["sound_info_path"])
 
@@ -197,32 +197,27 @@ def mask_and_latent_BalancedNegatives(sequence_data_set_dir: str):
         nbnegative_of_tone = np.min(list(nb_blocks_of_tone.values()))
         totnum_negative_samples = nbnegative_of_tone*(len(blocks_of_tone.keys())-1)
 
-        sampled_negative_indices = np.zeros((nb_tones, latent_length, totnum_negative_samples),
-                                            dtype=int) # just to stress that the negative indices
-
         # Then we pick for every tone, a subset of blocks containing ONLY this tone
         sampled_negative_of_tone = {}
         for k in blocks_of_tone.keys():
             sampled_negative_of_tone[k] = np.where(blocks_of_tone[k])[0][:nbnegative_of_tone]
             #np.random.choice(np.where(blocks_of_tone[k])[0],nbnegative_of_tone,replace=False)
 
-        ## Finally construct the negatives array of indices (array of int):
-        for idTone,(toneblock, tt) in enumerate(zip(tone_in_block, toneType)):
-            negative_indices = np.zeros((latent_length, totnum_negative_samples), dtype=int)
-            for i in np.where(toneblock)[0]:
-                # gather all negatives except of this tone:
-                all_negatives_othertones = np.concatenate([sampled_negative_of_tone[k] for k in np.setdiff1d(np.unique(toneType),tt)])
-                negative_indices[i, :] = all_negatives_othertones
-            sampled_negative_indices[idTone,:,:] = negative_indices
-
-        mask_time_indices[:, :] = tone_in_block
-
         import zarr as zr
         zg = zr.open_group(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"), mode="w")
-        # if "mask_time_indices" not in zg.keys():
+
+        mask_time_indices[:, :] = tone_in_block
         zg.array("mask_time_indices",data=mask_time_indices,chunks=(None,None))
-        zg.array("sampled_negative_indices", data=sampled_negative_indices, chunks=(None,None,None))
+
+        zg.create("sampled_negative_indices", shape=(nb_tones, latent_length, totnum_negative_samples), chunks=(1,None,None))
         zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None))
+        ## Finally construct the negatives array of indices (array of int):
+        for idTone,(toneblock, tt) in tqdm.tqdm(enumerate(zip(tone_in_block, toneType))):
+            negative_indices = np.zeros((latent_length, totnum_negative_samples), dtype=int)
+            # gather all negatives except this tone:
+            all_negatives_othertones = np.concatenate([sampled_negative_of_tone[k] for k in np.setdiff1d(np.unique(toneType), tt)])
+            negative_indices[np.where(toneblock)[0], :] = np.stack([all_negatives_othertones for _ in np.where(toneblock)[0]],axis=0)
+            zg["sampled_negative_indices"][idTone,:,:] = negative_indices
 
         ## We update the masks info_path in the dataframe
         sequences.loc[seq,"mask_info_path"] = str(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"))

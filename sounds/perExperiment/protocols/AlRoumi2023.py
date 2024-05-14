@@ -17,12 +17,16 @@ class LOT(Protocol_independentTrial):
     samplerate : int = 16000
     motif_repeat : int = 10
     lot_seq : str = "pairs"
-    tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
+    tones_fs : Union[list[float],np.ndarray,list[np.ndarray]] = field(default_factory=list)
 
     def __post_init__(self):
         self.name = self.name+"_"+self.lot_seq
-        sounds = [Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=[f]) for
-                  idf, f in enumerate(self.tones_fs)]
+        sounds = []
+        for idf, f in enumerate(self.tones_fs):
+            if type(f)==np.ndarray or type(f)==list:
+                sounds+=[Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=f)]
+            else:
+                sounds+=[Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=[f])]
         self.sound_pool = Sound_pool.from_list(sounds)
         # Note: naming the bip is useful to know who is where.
         self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
@@ -67,6 +71,40 @@ class LOT_generalize(LOT):
                 self.sound_pool.clear_picked()
         all_seq = [self.regSeq for _ in range(self.motif_repeat)]
         return all_pool,all_seq
+
+@dataclass
+class LOT_deviants(LOT):
+    ## Same as LOT but allows to insert arbitrary deviants within the sequence.
+    pos_deviants_sequences : list[int] = field(default_factory=list)
+    pos_deviants_in_pattern : list[int] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.name = self.name+"_"+self.lot_seq
+        sounds = []
+        for idf, f in enumerate(self.tones_fs):
+            if type(f)==np.ndarray or type(f)==list:
+                sounds+=[Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=f)]
+            else:
+                sounds+=[Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=[f])]
+        self.sound_pool = Sound_pool.from_list(sounds)
+        # Note: naming the bip is useful to know who is where.
+        self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
+
+        self.devSeqs = [lot_patterns[self.lot_seq](isi=self.isi) for _ in self.pos_deviants_sequences]
+        for i in range(len(self.devSeqs)):
+            self.devSeqs[i].as_deviant_pattern_from_pos(self.pos_deviants_in_pattern[i])
+
+    def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
+        ## Instantiate the vocabularies:
+        s_reg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(2))
+        all_pool = [s_reg for _ in range(self.motif_repeat)]
+        all_seq = [None for _ in range(self.motif_repeat)]
+        for id in np.setdiff1d(range(self.motif_repeat),self.pos_deviants_sequences):
+            all_seq[id] = self.regSeq
+        for idd,id in enumerate(self.pos_deviants_sequences):
+            all_seq[id] = self.devSeqs[idd]
+        return all_pool,all_seq
+
 
 #### Similar protocol but adapted to fit a Random-Regular-Random organization:
 @dataclass

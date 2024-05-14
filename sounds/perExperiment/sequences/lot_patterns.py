@@ -18,6 +18,9 @@ class LOT_p(Sequence):
     def as_deviant_pattern(self, id_deviant: int):
         self.pattern[self.deviant_pos[id_deviant]] = 1 - self.pattern[self.deviant_pos[id_deviant]]
         self.name = self.name + "_deviant"
+    def as_deviant_pattern_from_pos(self, id_pos: int):
+        self.pattern[id_pos] = 1 - self.pattern[id_pos]
+        self.name = self.name + "_deviant"
 
 @dataclass
 class LOT_repeat(LOT_p):

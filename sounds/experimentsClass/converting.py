@@ -39,11 +39,13 @@ def fromDir_toDataset(input_dir : Union[Path,str],output_dir : Optional[Union[Pa
         df_sound_info["name"] = [name]
         sound_info_paths += [str(Path(output_dir) / "sound_info" / name.replace(".wav",".csv"))]
         if inplace:
-            shutil.move(input_dir/name,output_dir/"sounds"/name)
+            if input_dir/name != output_dir/"sounds"/name:
+                shutil.move(input_dir/name,output_dir/"sounds"/name)
         else:
-            shutil.copy(input_dir/name,output_dir/"sounds"/name)
+            if input_dir/name != output_dir/"sounds"/name:
+                shutil.copy(input_dir/name,output_dir/"sounds"/name)
         sd,sr = torchaudio.load(input_dir / name)
-        durations += [sd.shape[-1]*sr]
+        durations += [sd.shape[-1]/sr]
         df_sound_info["duration"] = [durations[-1]]
         if sr!=srorig:
             resampler = julius.ResampleFrac(old_sr=sr, new_sr=new_sr) # change resampler
@@ -56,7 +58,7 @@ def fromDir_toDataset(input_dir : Union[Path,str],output_dir : Optional[Union[Pa
 
     df = pd.DataFrame()
     df["name"] = names
-    df["wav_path"] = [str(Path(input_dir)/n) for n in names]
+    df["wav_path"] = [str(Path(output_dir)/"sounds"/n) for n in names]
     df["duration"] = durations
     df["sound_info_path"] = sound_info_paths
     df.to_csv(Path(output_dir) / "trials.csv", index=False)
