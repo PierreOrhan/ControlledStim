@@ -14,11 +14,12 @@ class Benjamin2023(Protocol_independentTrial):
     name : str = "HigherGraph"
     duration_tone : float = 0.275
     samplerate : int = 16000
-    isi : float = 0.0
-    walk_length : int = 960
-    tones_fs : Union[list[float],np.ndarray] = field(default=np.linspace(300,1800,num=12))
+    isi : float = 0.05
+    walk_length : int = 100
+    tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
 
     def __post_init__(self):
+        self.tones_fs = np.linspace(300,1800,12)
         sounds = [Bip(samplerate=self.samplerate,duration=self.duration_tone,fs=[f]) for f in self.tones_fs]
         self.sound_pool = Sound_pool.from_list(sounds)
         self.seq = FullCommunityGraph(isi=self.isi,walk_length=self.walk_length)
@@ -38,8 +39,8 @@ class Benjamin2023(Protocol_independentTrial):
             all_sound += s_p
             nb_element += np.sum([type(s)!= Silence for s in s_p])
 
-        return (all_sound,nb_element,pd.DataFrame.from_dict({"duration_tone":self.duration_tone,"isi":self.isi,
-                                                             "walk_length":self.walk_length}))
+        return (all_sound,nb_element,pd.DataFrame.from_dict({"duration_tone":[self.duration_tone],"isi":[self.isi],
+                                                             "walk_length":[self.walk_length]}))
 
 @dataclass
 class Benjamin2023_syllable(Benjamin2023):
