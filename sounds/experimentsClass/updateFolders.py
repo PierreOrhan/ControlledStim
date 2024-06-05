@@ -30,14 +30,14 @@ def updateFolders(old_folder :str,new_folder : str):
     new_df = pd.merge(new_df,df,left_index=True,right_index=True)
     new_df.to_csv(Path(new_folder)/"trials.csv")
 
-old_folder = "/media/pierre/NeuroData2/datasets/syntaxicProbingV2/UD_ANNoverlap2"
-# # new_folder = "/media/pierre/NeuroData2/datasets/lot_MEG_encoding/stimulis"
-new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/syntaxicProbingV4/UD_ANNoverlap2"
-# old_folder = "/media/pierre/NeuroData2/datasets/TCI_ephys_block/sub-murols"
-# new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/TCI_slow_ephys/stimulis/sub-murols"
+# old_folder = "/media/pierre/NeuroData2/datasets/lot_MEG_encoding/stimulis"
+# # # new_folder = "/media/pierre/NeuroData2/datasets/lot_MEG_encoding/stimulis"
+# new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/lot_MEG_encoding/stimulis"
+old_folder ="/media/pierre/NeuroData2/datasets/syntaxicProbingV2/UD_ANNfinal"
+new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/syntaxicProbingVfinal/UD_ANNfinal"
 for sess in os.listdir(new_folder):
     updateFolders(old_folder+"/"+sess,new_folder+"/"+sess)
-# updateFolders(old_folder,new_folder)
+# # updateFolders(old_folder,new_folder)
 
 # old_folder = "/media/pierre/NeuroData2/datasets/lot_MEG_encoding/"
 # new_folder = "/media/pierre/NeuroData2/datasets/lot_MEG_encoding/stimulis/"
@@ -48,12 +48,16 @@ for sess in os.listdir(new_folder):
 # new_folder = "/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/nsd"
 # updateFolders(old_folder,new_folder)
 
-# old_folder = "/auto/data5/speechExposureEphys/oscipek/nsd/"
-# old_folder = "/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/nsd"
 # old_folder = "/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/nsdreduced"
-# # old_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/speechExposure_ltq_nsd/sounds/nsd"
 # new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/speechExposure_ltq_nsd/sounds/nsdreduced"
-# # new_folder = "/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/ltq"
+# updateFolders(old_folder,new_folder)
+#
+# old_folder = "/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/ltq"
+# new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/speechExposure_ltq_nsd/sounds/ltq"
+# updateFolders(old_folder,new_folder)
+#
+# old_folder = "/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/nsd"
+# new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/speechExposure_ltq_nsd/sounds/nsd"
 # updateFolders(old_folder,new_folder)
 #
 # old_folder = "/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/ltq"

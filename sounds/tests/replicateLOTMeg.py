@@ -14,6 +14,8 @@ import regex
 ## To simplify, we can gather the order with which the patient was presented the sequences
 # and recreate for each trial, the order of deviants, with the good position of deviants.
 
+sequence_isi = 0.1 #0.5
+isi = 0 #0.2
 
 # main_dir = Path("/media/pierre/NeuroData2/datasets/LOT_MEG/BIDS_deriv")
 main_dir = Path("/auto/data5/fusExposure/LOT_MEG/BIDS_deriv/")
@@ -50,7 +52,7 @@ for subject in list(filter(lambda e:e.startswith("sub-"),os.listdir(main_dir))):
                                                                     axis=-1))  # verify same deviance in one sequence
             deviant_seq = np.any(is_deviant > 0, axis=-1)
             deviant_pos = is_deviant[..., 0]
-            rs += [LOT_deviants(sequence_isi=0.5, isi=0.2,
+            rs += [LOT_deviants(sequence_isi=sequence_isi, isi=isi,
                                 name="LOT",
                                 tones_fs=np.array([[f0, f0 * 2, f0 * 4], [f1, f1 * 2, f1 * 4]]),
                                 duration_tone=0.05, samplerate=16000,
@@ -58,7 +60,7 @@ for subject in list(filter(lambda e:e.startswith("sub-"),os.listdir(main_dir))):
                                 motif_repeat=deviant_seq[0, :].shape[0],
                                 pos_deviants_sequences=np.where(deviant_seq[0, :])[0],
                                 pos_deviants_in_pattern=deviant_pos[0, np.where(deviant_seq[0, :])[0]])]
-            rs += [LOT_deviants(sequence_isi=0.5, isi=0.2,
+            rs += [LOT_deviants(sequence_isi=sequence_isi, isi=isi,
                                 name="LOTcomplementary",
                                 tones_fs=np.array([[f1, f1 * 2, f1 * 4], [f0, f0 * 2, f0 * 4]]),
                                 duration_tone=0.05, samplerate=16000,
@@ -69,7 +71,7 @@ for subject in list(filter(lambda e:e.startswith("sub-"),os.listdir(main_dir))):
         except:
             print("problem in seq_id ",seqid," for subject ",subject)
     if len(rs)>0:
-        output_dir = Path("/media/pierre/NeuroData2/datasets/lot_MEG_encoding/stimulis") / subject
+        output_dir = Path("/media/pierre/NeuroData2/datasets/lot_MEG_encoding2/stimulis") / subject
         os.makedirs(output_dir,exist_ok=True)
         lp = ListProtocol_independentTrial(rs)
         lp.generate(n_trial=1,output_dir=output_dir)
