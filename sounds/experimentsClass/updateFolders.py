@@ -11,20 +11,28 @@ def updateFolders(old_folder :str,new_folder : str):
     df = pd.read_csv(Path(new_folder)/"trials.csv")
     wav_paths,sip,mip = [],[],[]
     add_mip = False
+    add_sip = False
     for id in range(len(df)):
         wav_paths += [df.iloc[id]["wav_path"].replace(old_folder,new_folder)]
-        sip+=[df.iloc[id]["sound_info_path"].replace(old_folder, new_folder)]
+        if "sound_info_path" in df.iloc[id].keys():
+            add_sip = True
+            sip+=[df.iloc[id]["sound_info_path"].replace(old_folder, new_folder)]
         if "mask_info_path" in df.iloc[id].keys():
             add_mip = True
             mip += [df.iloc[id]["mask_info_path"].replace(old_folder, new_folder)]
-    if add_mip:
+    if add_mip and add_sip:
         new_df = pd.DataFrame({"wav_path":np.array(wav_paths),"sound_info_path":np.array(sip),
                                "mask_info_path":np.array(mip)})
-    else:
+    elif add_sip:
         new_df = pd.DataFrame({"wav_path": np.array(wav_paths), "sound_info_path": np.array(sip)})
+    else:
+        new_df = pd.DataFrame({"wav_path": np.array(wav_paths)})
 
     df.pop("wav_path")
-    df.pop("sound_info_path")
+    try:
+        df.pop("sound_info_path")
+    except:
+        pass
     if add_mip:
         df.pop("mask_info_path")
     new_df = pd.merge(new_df,df,left_index=True,right_index=True)
@@ -33,8 +41,10 @@ def updateFolders(old_folder :str,new_folder : str):
 # old_folder = "/media/pierre/NeuroData2/datasets/lot_MEG_encoding/stimulis"
 # # # new_folder = "/media/pierre/NeuroData2/datasets/lot_MEG_encoding/stimulis"
 # new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/lot_MEG_encoding/stimulis"
-old_folder ="/media/pierre/NeuroData2/datasets/syntaxicProbingV2/UD_ANNfinal"
-new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/syntaxicProbingVfinal/UD_ANNfinal"
+# old_folder ="/media/pierre/NeuroData2/datasets/syntaxicProbingVseamless/UD_ANNfinal"
+# new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/syntaxicProbingVseamless/UD_ANNfinal"
+old_folder ="/auto/data5/speechExposureEphys/TCI/TCI_normal/stimulis"
+new_folder = "/gpfsscratch/rech/fqt/uzz43va/NeuroData/TCI_normal/stimulis"
 for sess in os.listdir(new_folder):
     updateFolders(old_folder+"/"+sess,new_folder+"/"+sess)
 # # updateFolders(old_folder,new_folder)
