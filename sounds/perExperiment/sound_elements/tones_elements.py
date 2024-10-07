@@ -4,33 +4,6 @@ import librosa
 from  dataclasses import dataclass,field
 from typing import Union
 
-## Remark from Pierre:
-# I am not sure how useful is Gaussian_RN.
-#
-def gaussian_N(samplerate,duration):
-    n_samples = int(samplerate * duration)
-    return np.random.normal(0, 1, n_samples)
-@dataclass
-class Gaussian_N(Sound):
-    name : str = "Gaussian_N"
-    def __post_init__(self) -> None:
-        self.sound = gaussian_N(self.samplerate,self.duration)
-
-def gaussian_RN(samplerate,duration):
-    # Generate a gaussian noise being repeated one time.
-    # Pierre: I don't understand this. also you used:
-    # n_samples = int(samplerate * duration / 2000)
-    # I am not sure why
-    noise = gaussian_N(samplerate,duration)
-    r_noise = np.concatenate((noise, noise))
-    return r_noise
-
-@dataclass
-class Gaussian_RN(Sound):
-    name : str = "Gaussian_RN"
-    def __post_init__(self) -> None:
-        self.sound = gaussian_RN(self.samplerate,self.duration)
-
 def bip_randomPitch(samplerate: int,duration: float,fs: Union[list[float],np.ndarray]):
     dis = np.random.uniform(0, 1, len(fs))
     # weights for random linear combination of pure tones...
