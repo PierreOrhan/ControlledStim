@@ -3,6 +3,7 @@ from pathlib import Path
 from sounds.utils import get_input_lengths
 import soundfile as sf
 import numpy as np
+import tqdm
 
 def mask_and_latent(sequence_data_set_dir: str):
     """Preprocessing for self-supervised learning. Masking elements for contrastive learning using wav2vec2.
@@ -244,7 +245,7 @@ def mask_latent(sequence_data_set_dir: str):
 
     # Load the sequence data set
     sequences = pd.read_csv(sequence_data_set_dir + "/trials.csv")
-    for seq in range(sequences.shape[0]):
+    for seq in tqdm.tqdm(range(sequences.shape[0])):
         sequence = sequences.iloc[seq, :]
         sequence_info = pd.read_csv(sequence["sound_info_path"])
 
