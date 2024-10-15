@@ -272,6 +272,7 @@ class RandRegRand_LOT_orig(RandRegRand_LOT):
 
 @dataclass
 class RandRegRand_LOT_Generalize(RandRegRand_LOT):
+
     def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
         ## Instantiate the vocabularies:
         ## In this case we want to change the tone used in the generalize sequence at every step
@@ -282,4 +283,42 @@ class RandRegRand_LOT_Generalize(RandRegRand_LOT):
         s_regs = [Sound_pool.from_list(s_poolReg.pick_norepeat_n(2)) for _ in range(self.motif_repeat)]
         all_pool = [s_rand] + s_regs + [s_regs[-1]]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.randSeqEnd]
+        return all_pool,all_seq
+
+
+@dataclass
+class RandRegRand_LOT_Generalize_deviant(RandRegRand_LOT_deviant):
+    s_reg: list[list[Sound]] = field(default=None)
+
+    def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
+
+        if not self.s_rand is None:
+            all_pool = [self.s_rand] + self.s_reg
+        else:
+            ## Instantiate the vocabularies:
+            ## In this case we want to change the tone used in the generalize sequence at every step
+            # so we pick enough tone in a pool and probably forbid to take them...
+            s_poolReg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.motif_repeat*2))
+            s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(16))
+            s_poolReg.clear_picked() # clear the poolReg to be able to choose again from the self.motif_repeat*2
+            s_regs = [Sound_pool.from_list(s_poolReg.pick_norepeat_n(2)) for _ in range(self.motif_repeat+1)]
+            all_pool = [s_rand] + s_regs
+        all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.devSeq]
+        return all_pool,all_seq
+
+@dataclass
+class RandRegRand_LOT_Generalize_orig(RandRegRand_LOT_deviant):
+    def _getPoolAndSeq(self) -> Tuple[list[Sound_pool],list[Sequence]]:
+        if not self.s_rand is None:
+            all_pool = [self.s_rand] + self.s_reg
+        else:
+            ## Instantiate the vocabularies:
+            ## In this case we want to change the tone used in the generalize sequence at every step
+            # so we pick enough tone in a pool and probably forbid to take them...
+            s_poolReg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.motif_repeat*2))
+            s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(16))
+            s_poolReg.clear_picked() # clear the poolReg to be able to choose again from the self.motif_repeat*2
+            s_regs = [Sound_pool.from_list(s_poolReg.pick_norepeat_n(2)) for _ in range(self.motif_repeat+1)]
+            all_pool = [s_rand] + s_regs
+        all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.regSeq]
         return all_pool,all_seq
