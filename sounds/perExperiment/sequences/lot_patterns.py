@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 from sounds.perExperiment.sequences import Sequence
 from dataclasses import dataclass,field
@@ -86,8 +88,7 @@ class LOT_complex(LOT_p):
     def __post_init__(self):
         self.pattern = [0,1,0,0,0,1,1,1,1,0,1,1,0,0,0,1]
         self.deviant_pos = [8,11,13,14]
-
-lot_patterns = {"repeat": LOT_repeat,
+orig_lot_patterns = {"repeat": LOT_repeat,
                "alternate": LOT_alternate,
                "pairs": LOT_pairs,
                "quadruplets": LOT_quadruplets,
@@ -97,3 +98,29 @@ lot_patterns = {"repeat": LOT_repeat,
                "threetwo": LOT_threetwo,
                "centermirror": LOT_centermirror,
                "complex": LOT_complex}
+
+lot_patterns = copy.deepcopy(orig_lot_patterns)
+new_lot_patterns = {}
+def lambdaseq(X, Y, i):
+    seq = [[X, X, X, Y, Y, Y, X, X, Y, Y, X, Y, Y, X, Y, Y],
+           [X, X, X, Y, Y, Y, X, X, Y, Y, X, Y, X, Y, X, Y],
+           [X, X, X, Y, Y, Y, X, X, Y, Y, X, Y, X, X, Y, Y],
+           [X, Y, X, Y, X, Y, X, X, Y, Y, X, X, X, Y, Y, Y],
+           [X, X, Y, Y, X, X, X, Y, Y, Y, X, X, X, X, Y, Y],
+           [X, Y, Y, Y, X, Y, X, X, X, Y, X, Y, Y, Y, X, Y],
+           [X, Y, Y, X, Y, X, X, Y, X, Y, Y, X, Y, X, X, Y],
+           [X, X, X, Y, X, X, Y, X, X, Y, X, X, Y, X, X, X],
+           [X, Y, Y, Y, Y, X, Y, X, X, X, X, Y, X, Y, Y, X],
+           [X, X, Y, Y, Y, X, X, X, X, Y, Y, Y, X, X, Y, X]]
+    return seq[i]
+
+for id_newlot in range(10):
+    @dataclass
+    class newLOT(LOT_p):
+        name = "newLOT-"+str(id_newlot)
+        id_newlot = id_newlot
+        def __post_init__(self):
+            self.pattern = lambdaseq(0,1,self.id_newlot)
+            self.deviant_pos = [8,11,13,14]
+    lot_patterns["newLOT-"+str(id_newlot)] = newLOT
+    new_lot_patterns["newLOT-"+str(id_newlot)] = newLOT

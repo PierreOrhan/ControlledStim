@@ -1,7 +1,7 @@
 from pathlib import Path
 from sounds.perExperiment.protocols.AlRoumi2023 import RandRegRand_LOT_Generalize_deviant,RandRegRand_LOT_Generalize_orig
 from sounds.perExperiment.protocols.ProtocolGeneration import ListProtocol_independentTrial
-from sounds.perExperiment.sequences.lot_patterns import orig_lot_patterns
+from sounds.perExperiment.sequences.lot_patterns import new_lot_patterns
 ### Debugging: We fix the pool and repeat the probing over and over
 import pandas as pd
 from sounds.perExperiment.sound_elements import Bip,Silence
@@ -11,7 +11,7 @@ import numpy as np
 
 motif_repeat = 3
 # output_dir = Path("/media/pierre/NeuroData2/datasets/lot_further/lot_decoding_unitnormV2") / ("randregrand"+str(motif_repeat)+"_noIsi")
-output_dir = Path("/auto/data5/speechExposureEphys/LOT/lot_further/lot_decoding_unitnormV0_generalize") / ("randregrand"+str(motif_repeat)+"_noIsi")
+output_dir = Path("/auto/data5/speechExposureEphys/LOT/lot_further/lot_decoding_unitnormVnew_generalize") / ("randregrand"+str(motif_repeat)+"_noIsi")
 
 
 tones_fs=np.logspace(np.log(222),np.log(2000),20,base=np.exp(1))
@@ -28,7 +28,7 @@ rs = []
 from itertools import product
 #
 for idp,(low_freq,high_freq) in enumerate(zip(tones_fs[:1],tones_fs[-1:])):
-    for k in orig_lot_patterns.keys():
+    for k in new_lot_patterns.keys():
         s_reg1 = Sound_pool.from_list([Bip(name="bip-" + str(idf), samplerate=16000, duration=0.05, fs=[f])
                                       for idf, f in enumerate([tones_fs[0], tones_fs[-1]])])  # 889.8296701050009, 1413.4860237345383
         s_reg2 = Sound_pool.from_list([Bip(name="bip-" + str(idf), samplerate=16000, duration=0.05, fs=[f])
