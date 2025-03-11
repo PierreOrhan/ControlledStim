@@ -1,18 +1,18 @@
 from pathlib import Path
-from sounds.perExperiment.protocols.AlRoumi2023 import RandRegRand_LOT,RandRegRand_LOT_deviant,RandRegRand_LOT_orig
-from sounds.perExperiment.protocols.ProtocolGeneration import ListProtocol_independentTrial
-from sounds.perExperiment.sequences.lot_patterns import lot_patterns
+from cstim.sounds.perExperiment.protocols.AlRoumi2023 import RandRegRand_LOT,RandRegRand_LOT_deviant,RandRegRand_LOT_orig
+from cstim.sounds.perExperiment.protocols.ProtocolGeneration import ListProtocol_independentTrial
+from cstim.sounds.perExperiment.sequences.lot_patterns import lot_patterns
 ### Debugging: We fix the pool and repeat the probing over and over
 import pandas as pd
-from sounds.perExperiment.sound_elements import Bip,Silence
-from sounds.perExperiment.sound_elements import Sound_pool,Sound
+from cstim.sounds.perExperiment.sound_elements import Bip,Silence
+from cstim.sounds.perExperiment.sound_elements import Sound_pool,Sound
 import numpy as np
-
+import os
 
 motif_repeat = 3
 # output_dir = Path("/media/pierre/NeuroData2/datasets/lot_further/lot_decoding_unitnormV2") / ("randregrand"+str(motif_repeat)+"_noIsi")
-output_dir = Path("/auto/data5/speechExposureEphys/LOT/lot_further/lot_decoding_unitnormV0") / ("randregrand"+str(motif_repeat)+"_noIsi")
-
+output_dir = Path("/auto/data5/speechExposureEphys/LOT/lot_further/lot_decoding_unitnormVCompBio") / ("randregrand"+str(motif_repeat)+"_noIsi")
+os.makedirs(Path("/auto/data5/speechExposureEphys/LOT/lot_further/lot_decoding_unitnormVCompBio"),exist_ok=True)
 
 tones_fs=np.logspace(np.log(222),np.log(2000),20,base=np.exp(1))
 sounds_rand = [Bip(name="bip-" + str(idf), samplerate=16000, duration=0.05, fs=[f]) for idf, f in

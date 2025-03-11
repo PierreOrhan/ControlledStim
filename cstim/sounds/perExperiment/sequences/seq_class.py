@@ -1,5 +1,5 @@
-from sounds.perExperiment.sound_elements.sound_class import Sound,Sound_pool
-from sounds.perExperiment.sound_elements.tones_elements import Silence
+from cstim.sounds.perExperiment.sound_elements.sound_class import Sound,Sound_pool
+from cstim.sounds.perExperiment.sound_elements.tones_elements import Silence
 from dataclasses import dataclass,field
 import numpy as np
 from typing import Union

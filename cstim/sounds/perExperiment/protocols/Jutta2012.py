@@ -2,12 +2,12 @@ from abc import ABC
 
 import numpy as np
 
-from sounds.perExperiment.sequences.patterns import SyllableTriplet
-from sounds.perExperiment.sound_elements.speech_elements import FrenchSyllable
-from sounds.perExperiment.sound_elements.tones_elements import Bip
-from sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
-from sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
-from sounds.perExperiment.sound_elements import ramp_sound,pitch_shift
+from cstim.sounds.perExperiment.sequences.patterns import SyllableTriplet
+from cstim.sounds.perExperiment.sound_elements.speech_elements import FrenchSyllable
+from cstim.sounds.perExperiment.sound_elements.tones_elements import Bip
+from cstim.sounds.perExperiment.sound_elements import Sound_pool,Sound,Silence
+from cstim.sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
+from cstim.sounds.perExperiment.sound_elements import ramp_sound,pitch_shift
 from dataclasses import dataclass
 import pandas as pd
 import copy
