@@ -1,5 +1,6 @@
 from converting import fromDir_toDataset
 from pathlib import Path
 
-dir_word = Path("/auto/data5/speechExposureEphys/symbolex/num_dd2_audio")
-fromDir_toDataset(dir_word,output_dir=Path(str(dir_word).replace("num_dd2_audio","ANN_num_dd2_audio")),inplace=False)
+for sdir in ["word_audio","num_dd1_audio","num_dd2_audio"]:
+    dir_symbol = Path("/auto/data5/speechExposureEphys/symbolex")
+    fromDir_toDataset(dir_symbol/sdir,output_dir=Path(dir_symbol/("ANN_"+str(sdir))),inplace=False)

@@ -19,13 +19,14 @@ def mask_and_latent(sequence_data_set_dir: str):
 
     num_negative_samples = 100  # Number of negative samples for contrastive learning
 
+    sequence_data_set_dir = Path(sequence_data_set_dir)
+
     # Load the sequence data set
-    sequences = pd.read_csv(sequence_data_set_dir + "/trials.csv")
+    sequences = pd.read_csv(sequence_data_set_dir/"trials.csv")
     for seq in range(sequences.shape[0]):
         sequence = sequences.iloc[seq, :]
-        sequence_info = pd.read_csv(sequence["sound_info_path"])
-
-        sound_mat = sf.read(sequence["wav_path"])
+        sequence_info = pd.read_csv(sequence_data_set_dir/sequence["sound_info_path"])
+        sound_mat = sf.read(sequence_data_set_dir/sequence["wav_path"])
 
         # Get the number of latent samples
         latent_length = get_input_lengths(len(sound_mat[0]), wav2vec2_params["conv_kernel"],
@@ -52,6 +53,10 @@ def mask_and_latent(sequence_data_set_dir: str):
         block_inside_tone = np.array(
             [[ti.left <= lti.left and ti.right >= lti.right for lti in latentblock_itv] for ti in
              tone_itv])
+      
+        # Blocks that are fully contained in the tone
+        latent_time_reduction_blocks = block_inside_tone #np.stack([block_inside_tone for _ in range(nb_tones)], axis=0)
+
 
         silence_start = sequence_info["start"][sequence_info["name"]=="Silence"] * 16000
         silence_duration = sequence_info["duration"][sequence_info["name"]=="Silence"] * 16000
@@ -63,9 +68,6 @@ def mask_and_latent(sequence_data_set_dir: str):
 
         assert np.all(np.any(block_inside_tone, axis=-1))
         nb_tones = np.sum(sequence_info["name"]!="Silence")
-
-        # Blocks that are fully contained in the tone
-        latent_time_reduction_blocks = block_inside_tone #np.stack([block_inside_tone for _ in range(nb_tones)], axis=0)
 
         ## stack: we have the same structure for all the sounds here (one type of sequence), so the
         # focus of the loss will be on the same latent.
@@ -105,16 +107,16 @@ def mask_and_latent(sequence_data_set_dir: str):
         sampled_negative_indices[:, :, :] = mat_negative_mask
 
         import zarr as zr
-        zg = zr.open_group(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"), mode="w")
+        zg = zr.open_group(sequence_data_set_dir / sequence["wav_path"].replace(".wav",".masks"), mode="w")
         # if "mask_time_indices" not in zg.keys():
         zg.array("mask_time_indices",data=mask_time_indices,chunks=(None,None))
         zg.array("sampled_negative_indices", data=sampled_negative_indices, chunks=(None,None,None))
         zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None))
 
         ## We update the masks info_path in the dataframe
-        sequences.loc[seq,"mask_info_path"] = str(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"))
+        sequences.loc[seq,"mask_info_path"] = str(sequence["wav_path"].replace(".wav",".masks"))
     # update the dataset info csv:
-    sequences.to_csv(sequence_data_set_dir + "/trials.csv")
+    sequences.to_csv(sequence_data_set_dir / "trials.csv")
 
 
 
@@ -133,14 +135,13 @@ def mask_and_latent_BalancedNegatives(sequence_data_set_dir: str):
                        "conv_stride": [5, 2, 2, 2, 2, 2, 2]}
 
     num_negative_samples = 100  # Number of negative samples for contrastive learning
-
+    sequence_data_set_dir = Path(sequence_data_set_dir)
     # Load the sequence data set
-    sequences = pd.read_csv(sequence_data_set_dir + "/trials.csv")
+    sequences = pd.read_csv(sequence_data_set_dir /"trials.csv")
     for seq in range(sequences.shape[0]):
         sequence = sequences.iloc[seq, :]
-        sequence_info = pd.read_csv(sequence["sound_info_path"])
-
-        sound_mat = sf.read(sequence["wav_path"])
+        sequence_info = pd.read_csv(sequence_data_set_dir/sequence["sound_info_path"])
+        sound_mat = sf.read(sequence_data_set_dir/sequence["wav_path"])
 
         # Get the number of latent samples
         latent_length = get_input_lengths(len(sound_mat[0]), wav2vec2_params["conv_kernel"],
@@ -219,16 +220,16 @@ def mask_and_latent_BalancedNegatives(sequence_data_set_dir: str):
         mask_time_indices[:, :] = tone_in_block
 
         import zarr as zr
-        zg = zr.open_group(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"), mode="w")
+        zg = zr.open_group(sequence_data_set_dir/ sequence["wav_path"].replace(".wav",".masks"), mode="w")
         # if "mask_time_indices" not in zg.keys():
         zg.array("mask_time_indices",data=mask_time_indices,chunks=(None,None))
         zg.array("sampled_negative_indices", data=sampled_negative_indices, chunks=(None,None,None))
         zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None))
 
         ## We update the masks info_path in the dataframe
-        sequences.loc[seq,"mask_info_path"] = str(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"))
+        sequences.loc[seq,"mask_info_path"] = str(sequence["wav_path"].replace(".wav",".masks"))
     # update the dataset info csv:
-    sequences.to_csv(sequence_data_set_dir + "/trials.csv")
+    sequences.to_csv(sequence_data_set_dir / "trials.csv")
 
 def mask_latent(sequence_data_set_dir: str):
     """Preprocessing for self-supervised learning.
@@ -242,14 +243,14 @@ def mask_latent(sequence_data_set_dir: str):
     wav2vec2_stride = 320  # Stride between each latent sample
     wav2vec2_params = {"conv_kernel": [10, 3, 3, 3, 3, 2, 2],
                        "conv_stride": [5, 2, 2, 2, 2, 2, 2]}
-
+    sequence_data_set_dir = Path(sequence_data_set_dir)
     # Load the sequence data set
-    sequences = pd.read_csv(sequence_data_set_dir + "/trials.csv")
+    sequences = pd.read_csv(sequence_data_set_dir / "trials.csv")
     for seq in tqdm.tqdm(range(sequences.shape[0])):
         sequence = sequences.iloc[seq, :]
-        sequence_info = pd.read_csv(sequence["sound_info_path"])
+        sequence_info = pd.read_csv(sequence_data_set_dir/sequence["sound_info_path"])
 
-        sound_mat = sf.read(sequence["wav_path"])
+        sound_mat = sf.read(sequence_data_set_dir/sequence["wav_path"])
 
         # Get the number of latent samples
         latent_length = get_input_lengths(len(sound_mat[0]), wav2vec2_params["conv_kernel"],
@@ -287,13 +288,14 @@ def mask_latent(sequence_data_set_dir: str):
         mask_time_indices = np.zeros((nb_tones, latent_length), dtype=bool)
         mask_time_indices[:, :] = tone_in_block
 
+
         import zarr as zr
-        zg = zr.open_group(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"), mode="w")
+        zg = zr.open_group(sequence_data_set_dir/ sequence["wav_path"].replace(".wav",".masks"), mode="w")
         # if "mask_time_indices" not in zg.keys():
         zg.array("mask_time_indices",data=mask_time_indices,chunks=(None,None))
         zg.array("latent_time_reduction", data=latent_time_reduction_blocks, chunks=(None,None))
 
         ## We update the masks info_path in the dataframe
-        sequences.loc[seq,"mask_info_path"] = str(Path(sequence_data_set_dir) / sequence["wav_path"].replace(".wav",".masks"))
+        sequences.loc[seq,"mask_info_path"] = str(sequence["wav_path"].replace(".wav",".masks"))
     # update the dataset info csv:
-    sequences.to_csv(sequence_data_set_dir + "/trials.csv")
+    sequences.to_csv(sequence_data_set_dir / "trials.csv")

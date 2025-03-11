@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ControlledStim"
+version = "0.0.0"
+dependencies = [
+    mbrola,
+    zarr
+    julius,
+    scipy,
+    pandas]

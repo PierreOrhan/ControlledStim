@@ -56,7 +56,7 @@ def fromDir_toDataset(input_dir : Union[Path,str],output_dir : Optional[Union[Pa
 
     df = pd.DataFrame()
     df["name"] = names
-    df["wav_path"] = [str(Path(input_dir)/n) for n in names]
+    df["wav_path"] = [str(Path(output_dir)/"sounds"/n) for n in names]
     df["duration"] = durations
     df["sound_info_path"] = sound_info_paths
     df.to_csv(Path(output_dir) / "trials.csv", index=False)
