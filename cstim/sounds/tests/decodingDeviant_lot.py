@@ -67,6 +67,6 @@ for idp,(low_freq,high_freq) in enumerate(zip(tones_fs[:1],tones_fs[-1:])):
 
 lp = ListProtocol_independentTrial(rs)
 lp.generate(n_trial=1,output_dir=output_dir)
-from sounds.experimentsClass.element_masking import mask_latent,mask_and_latent_BalancedNegatives
+from cstim.sounds.experimentsClass.element_masking import mask_latent,mask_and_latent_BalancedNegatives
 # mask_latent(str(output_dir))
 mask_and_latent_BalancedNegatives(str(output_dir))

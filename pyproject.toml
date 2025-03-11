@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "ControlledStim"
 version = "0.0.0"
 dependencies = [
-    mbrola,
-    zarr
-    julius,
-    scipy,
-    pandas]
+    "zarr",
+    "julius",
+    "scipy",
+    "pandas",
+    "voxpopuli"]

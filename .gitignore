@@ -5,3 +5,4 @@ sounds/data
 __pycache__
 ```
 sounds/noiseVocoders/
+*.egg-info
