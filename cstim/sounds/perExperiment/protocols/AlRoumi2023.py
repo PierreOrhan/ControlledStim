@@ -1,6 +1,6 @@
 import pandas as pd
 from cstim.sounds.perExperiment.sequences import lot_patterns,ToneList,Sequence,RandomPattern
-from cstim.sounds.perExperiment.sound_elements import Bip,Silence
+from cstim.sounds.perExperiment.sound_elements import Bip,Silence,EnglishSyllable
 from cstim.sounds.perExperiment.sound_elements import Sound_pool,Sound
 from cstim.sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
 from cstim.sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
@@ -154,7 +154,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
     motif_repeat : int = 3
     lot_seq : str = "pairs"
     tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
-
+    rand_size : int = 16
     s_rand: list[Sound] = field(default=None)
     s_reg: list[Sound] = field(default=None)
 
@@ -164,9 +164,9 @@ class RandRegRand_LOT(Protocol_independentTrial):
                   idf, f in enumerate(self.tones_fs)]
         # Note: naming the bip is useful to know who is where.
         self.sound_pool = Sound_pool.from_list(sounds)
-        self.randSeq = ToneList(isi=self.isi, cycle=16)
+        self.randSeq = ToneList(isi=self.isi, cycle=self.rand_size)
         self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
-        self.randSeqEnd = RandomPattern(isi=self.isi,nb_unique_elements=2,len=16)
+        self.randSeqEnd = RandomPattern(isi=self.isi,nb_unique_elements=2,len=self.rand_size)
         ## Make sure the first random tone breaks the sequence:
         if self.randSeqEnd.pattern[0] == self.regSeq.pattern[0]:
             self.randSeqEnd.pattern[0] = 1-self.randSeqEnd.pattern[0]
@@ -176,7 +176,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
         if not self.s_rand is None:
             all_pool = [self.s_rand] + [self.s_reg for _ in range(self.motif_repeat)] + [self.s_reg]
         else:
-            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
+            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_size))
             s_reg = Sound_pool.from_list(s_rand.pick_norepeat_n(2))
             all_pool = [s_rand] + [s_reg for _ in range(self.motif_repeat)] + [s_reg]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.randSeqEnd]
@@ -205,7 +205,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
 
     def samplePool(self) -> Tuple[list[Sound], list[Sound]]:
         assert self.s_rand is None
-        self.s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
+        self.s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_size))
         self.s_reg = Sound_pool.from_list(self.s_rand.pick_norepeat_n(2))
         return self.s_rand, self.s_reg
 
@@ -214,7 +214,7 @@ class RandRegRand_LOT(Protocol_independentTrial):
         self.s_reg = s_reg
     def sampleBoundPool(self,min_freqDist:float,max_freqDist:float) -> Tuple[list[Sound],list[Sound]]:
         assert self.s_rand is None
-        self.s_rand  = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
+        self.s_rand  = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_size))
         self.sound_pool.clear_picked()
         self.s_reg = Sound_pool.from_list(self.sound_pool.boundpick_norepeat_n(2,min_freqDist,max_freqDist,"first_freq"))
         return self.s_rand,self.s_reg
@@ -227,7 +227,7 @@ class RandRegRand_LOT_deviant(RandRegRand_LOT):
         sounds = [Bip(name="bip-"+str(idf),samplerate=self.samplerate, duration=self.duration_tone, fs=[f]) for idf,f in enumerate(self.tones_fs)]
         # Note: naming the bip is useful to one who is where.
         self.sound_pool = Sound_pool.from_list(sounds)
-        self.randSeq = ToneList(isi=self.isi, cycle=16)
+        self.randSeq = ToneList(isi=self.isi, cycle=self.rand_size)
         self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
 
         self.devSeq = lot_patterns[self.lot_seq](isi=self.isi)
@@ -238,7 +238,7 @@ class RandRegRand_LOT_deviant(RandRegRand_LOT):
         if not self.s_rand is None:
             all_pool = [self.s_rand] + [self.s_reg for _ in range(self.motif_repeat)] + [self.s_reg]
         else:
-            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
+            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_size))
             s_reg = Sound_pool.from_list(s_rand.pick_norepeat_n(2))
             all_pool = [s_rand] + [s_reg for _ in range(self.motif_repeat)] + [s_reg]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.devSeq]
@@ -256,14 +256,14 @@ class RandRegRand_LOT_orig(RandRegRand_LOT):
         sounds = [Bip(name="bip-"+str(idf),samplerate=self.samplerate, duration=self.duration_tone, fs=[f]) for idf,f in enumerate(self.tones_fs)]
         # Note: naming the bip is useful to one who is where.
         self.sound_pool = Sound_pool.from_list(sounds)
-        self.randSeq = ToneList(isi=self.isi, cycle=16)
+        self.randSeq = ToneList(isi=self.isi, cycle=self.rand_size)
         self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)
     def _getPoolAndSeq(self) -> Tuple[list[Sound_pool], list[Sequence]]:
         ## Instantiate the vocabularies:
         if not self.s_rand is None:
             all_pool = [self.s_rand] + [self.s_reg for _ in range(self.motif_repeat)] + [self.s_reg]
         else:
-            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(16))
+            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_size))
             s_reg = Sound_pool.from_list(s_rand.pick_norepeat_n(2))
             all_pool = [s_rand] + [s_reg for _ in range(self.motif_repeat)] + [s_reg]
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.regSeq]
@@ -278,7 +278,7 @@ class RandRegRand_LOT_Generalize(RandRegRand_LOT):
         ## In this case we want to change the tone used in the generalize sequence at every step
         # so we pick enough tone in a pool and probably forbid to take them...
         s_poolReg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.motif_repeat*2))
-        s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(16))
+        s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(self.rand_size))
         s_poolReg.clear_picked() # clear the poolReg to be able to choose again from the self.motif_repeat*2
         s_regs = [Sound_pool.from_list(s_poolReg.pick_norepeat_n(2)) for _ in range(self.motif_repeat)]
         all_pool = [s_rand] + s_regs + [s_regs[-1]]
@@ -299,7 +299,7 @@ class RandRegRand_LOT_Generalize_deviant(RandRegRand_LOT_deviant):
             ## In this case we want to change the tone used in the generalize sequence at every step
             # so we pick enough tone in a pool and probably forbid to take them...
             s_poolReg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.motif_repeat*2))
-            s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(16))
+            s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(self.rand_size))
             s_poolReg.clear_picked() # clear the poolReg to be able to choose again from the self.motif_repeat*2
             s_regs = [Sound_pool.from_list(s_poolReg.pick_norepeat_n(2)) for _ in range(self.motif_repeat+1)]
             all_pool = [s_rand] + s_regs
@@ -316,9 +316,51 @@ class RandRegRand_LOT_Generalize_orig(RandRegRand_LOT_deviant):
             ## In this case we want to change the tone used in the generalize sequence at every step
             # so we pick enough tone in a pool and probably forbid to take them...
             s_poolReg = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.motif_repeat*2))
-            s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(16))
+            s_rand = Sound_pool.from_list(s_poolReg.pick_norepeat_n(self.rand_size))
             s_poolReg.clear_picked() # clear the poolReg to be able to choose again from the self.motif_repeat*2
             s_regs = [Sound_pool.from_list(s_poolReg.pick_norepeat_n(2)) for _ in range(self.motif_repeat+1)]
             all_pool = [s_rand] + s_regs
         all_seq = [self.randSeq] + [self.regSeq for _ in range(self.motif_repeat)] + [self.regSeq]
         return all_pool,all_seq
+    
+
+from cstim.sounds.perExperiment.sound_elements.segment_elements import SoundSegment
+from typing import List
+from pathlib import Path
+
+@dataclass
+class RandRegRand_LOT_otherStim(RandRegRand_LOT):
+    """
+        Saffran paradigm with different stimulis.
+    """
+    sound_paths : List[Union[str,Path]] = ""
+    start: list[float] = 0
+    stop: list[float] = 0.05
+
+    def __post_init__(self):
+        super().__post_init__()
+        sounds = [SoundSegment(name="bip-" + str(idf), 
+                               filename = self.sound_paths[idf],
+                               start = self.start[idf],
+                               stop = self.stop[idf]) for idf in range(len(self.sound_paths))]
+        # Note: naming the bip is useful to know who is where.
+        self.sound_pool = Sound_pool.from_list(sounds)
+
+
+
+@dataclass
+class RandRegRand_LOT_syllable(RandRegRand_LOT):
+    """
+        Saffran paradigm with different stimulis.
+    """
+
+    def __post_init__(self):
+        syllables =   np.array([["t","u"],["p","i"],["r","o"],["b","i"],["d","a"],["k","u"],
+                     ["g","o"],["l","a"],["b","u"],["p","a"],["d","o"],["t","i"]])
+        self.syllables = ["".join(e) for e in syllables]
+        self.rand_size = len(self.syllables)
+        super().__post_init__()
+        sounds = [EnglishSyllable(name="syllable-" + str(ids), 
+                                    syllable=s,samplerate=self.samplerate,duration=self.duration_tone)
+                                    for ids,s in enumerate(self.syllables)]
+        self.sound_pool = Sound_pool.from_list(sounds)

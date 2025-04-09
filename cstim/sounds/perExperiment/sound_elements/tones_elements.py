@@ -55,6 +55,14 @@ class Bip(Sound):
     def __post_init__(self) -> None:
         self.sound = bip(self.samplerate,self.duration,self.fs)
         self.first_freq = self.fs[0]
+    
+    def __eq__(self, other):
+        if not isinstance(other, Bip):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+        if np.all(self.fs==other.fs) and self.duration==other.duration and self.first_freq==other.first_freq and self.samplerate==other.samplerate:
+            return True
+        return False
 
 @dataclass
 class Silence(Sound):

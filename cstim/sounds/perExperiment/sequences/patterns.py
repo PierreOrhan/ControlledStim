@@ -109,3 +109,22 @@ class SyllableTriplet(Sequence):
     def __post_init__(self):
         self.pattern = list(range(self.cycle))
         self.nb_unique_elements = self.cycle
+
+
+@dataclass
+class WordStream(Sequence):
+    size_words: int = 3
+    nb_words: int = 4
+    len : int = 42 # the total number of words in the simulation 
+    def __post_init__(self):
+        # A stream that is made of an alternation of "words" each constitued of size_word elements
+        # for a total of nb_words*size_words elements (default: 4*3 = 12)
+        
+        #pick the word
+        word_pattern  = np.random.choice(np.arange(self.nb_words),self.len,replace=True)
+        self.nb_unique_elements = self.nb_words*self.size_words
+        # change into syllable
+        self.pattern = np.repeat(word_pattern,self.size_words)*self.size_words
+        for i in range(self.size_words):
+            self.pattern[i::self.size_words] = self.pattern[::self.size_words]+i
+        

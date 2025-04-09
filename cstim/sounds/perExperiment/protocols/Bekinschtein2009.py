@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from cstim.sounds.perExperiment.sequences import ToneList,Local_Deviant,Local_Standard,Sequence,RandomPattern
-from cstim.sounds.perExperiment.sound_elements import Bip,Silence
+from cstim.sounds.perExperiment.sound_elements import Bip,Silence,EnglishSyllable
 from cstim.sounds.perExperiment.sound_elements import Sound_pool,Sound
 from cstim.sounds.perExperiment.protocols.ProtocolGeneration import Protocol_independentTrial
 from cstim.sounds.perExperiment.sound_elements import ramp_sound,normalize_sound
@@ -20,7 +20,7 @@ class RandRegDev_LocalGlobal(Protocol_independentTrial):
     global_standard : str = "localstandard"
     is_deviant : bool = True
     tones_fs : Union[list[float],np.ndarray] = field(default_factory=list)
-
+    rand_size : int = 15
     s_rand: list[Sound] = field(default=None)
     s_reg: list[Sound] = field(default=None)
 
@@ -30,7 +30,7 @@ class RandRegDev_LocalGlobal(Protocol_independentTrial):
                   idf, f in enumerate(self.tones_fs)]
         # Note: naming the bip is useful to one who is where.
         self.sound_pool = Sound_pool.from_list(sounds)
-        self.randSeq = ToneList(isi=self.isi, cycle=15)
+        self.randSeq = ToneList(isi=self.isi, cycle=self.rand_size)
         if self.global_standard =="localstandard":
             self.regSeq = Local_Standard(isi=self.isi)
             self.devSeq = Local_Deviant(isi=self.isi)
@@ -43,7 +43,7 @@ class RandRegDev_LocalGlobal(Protocol_independentTrial):
         if not self.s_rand is None:
             all_pool = [self.s_rand]
         else:
-            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(15))
+            s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_size))
             all_pool = [s_rand]
 
         if not self.s_reg is None:
@@ -81,7 +81,7 @@ class RandRegDev_LocalGlobal(Protocol_independentTrial):
 
     def samplePool(self) -> Tuple[list[Sound], list[Sound]]:
         assert self.s_rand is None
-        self.s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(15))
+        self.s_rand = Sound_pool.from_list(self.sound_pool.pick_norepeat_n(self.rand_size))
         self.s_reg = Sound_pool.from_list(self.s_rand.pick_norepeat_n(2))
         return self.s_rand, self.s_reg
 
@@ -104,10 +104,45 @@ class RandRegDev_LocalGlobal_orig(RandRegDev_LocalGlobal):
                   idf, f in enumerate(self.tones_fs)]
         # Note: naming the bip is useful to one who is where.
         self.sound_pool = Sound_pool.from_list(sounds)
-        self.randSeq = ToneList(isi=self.isi, cycle=15)
+        self.randSeq = ToneList(isi=self.isi, cycle=self.rand_size)
         if self.global_standard =="localstandard":
             self.regSeq = Local_Standard(isi=self.isi)
             self.devSeq = Local_Standard(isi=self.isi)
         else:
             self.regSeq = Local_Deviant(isi=self.isi)
             self.devSeq = Local_Deviant(isi = self.isi)
+
+
+
+from cstim.sounds.perExperiment.sound_elements.segment_elements import SoundSegment
+from typing import List
+from pathlib import Path
+
+@dataclass
+class RandRegDev_LocalGlobal_otherStim(RandRegDev_LocalGlobal):
+    sound_paths : List[Union[str,Path]] = ""
+    start: list[float] = 0
+    stop: list[float] = 0.05
+    
+    def __post_init__(self):
+        super().__post_init__()
+        sounds = [SoundSegment(name="bip-" + str(idf), 
+                               filename = self.sound_paths[idf],
+                               start = self.start[idf],
+                               stop = self.stop[idf]) for idf in range(len(self.sound_paths))]
+        # Note: naming the bip is useful to know who is where.
+        self.sound_pool = Sound_pool.from_list(sounds)
+
+
+@dataclass
+class RandRegDev_LocalGlobal_syllable(RandRegDev_LocalGlobal):    
+    def __post_init__(self):
+        syllables =   np.array([["t","u"],["p","i"],["r","o"],["b","i"],["d","a"],["k","u"],
+                     ["g","o"],["l","a"],["b","u"],["p","a"],["d","o"],["t","i"]])
+        self.syllables = ["".join(e) for e in syllables]
+        self.rand_size = len(self.syllables)
+        super().__post_init__()
+        sounds = [EnglishSyllable(name="syllable-" + str(ids), 
+                                    syllable=s,samplerate=self.samplerate,duration=self.duration_tone)
+                                    for ids,s in enumerate(self.syllables)]
+        self.sound_pool = Sound_pool.from_list(sounds)

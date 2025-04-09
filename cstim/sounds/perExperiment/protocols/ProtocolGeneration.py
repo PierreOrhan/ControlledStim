@@ -119,7 +119,7 @@ class ListProtocol_independentTrial:
 
                 name_trials += [name]
                 wav_paths += [str("sounds/" + (name + ".wav"))]
-                mask_info_path += [None]
+                mask_info_path += [""]
                 sound_durations += [sd_out.shape[0]/protocol.samplerate]
                 sound_info_paths += [str( "sound_info/" + (name + ".csv"))]
                 number_elements += [nb_element]
@@ -189,7 +189,7 @@ class Protocol_TrainTest(Protocol):
                 sound_durations += [ self._savetrial(all_sound,output_dir,name,is_train = is_train)]
                 name_trials += [name+"_"+subname]
                 wav_paths += [str("sounds/" +  (name + "_train" + ".wav"))]
-                mask_info_path += [None]
+                mask_info_path += [""]
                 sound_info_paths += [str("sound_info/" +  (name + ".csv"))]
                 number_elements += [nb_element]
                 is_train +=[is_train]

@@ -61,6 +61,11 @@ class FrenchSyllable(Sound):
             self.sound = wave_array
             self.duration = self.sound.shape[0]/self.samplerate
 
+    def __eq__(self,other):
+        if self.syllable==other.syllable and self.lang==other.lang and self.voice_id==other.voice_id and self.duration==other.duration:
+            return True
+        return False
+
 @dataclass
 class EnglishSyllable(FrenchSyllable):
     lang : str = "en"

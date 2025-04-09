@@ -10,4 +10,5 @@ dependencies = [
     "julius",
     "scipy",
     "pandas",
-    "voxpopuli"]
+    "voxpopuli",
+    "librosa"]
