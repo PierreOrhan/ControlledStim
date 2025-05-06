@@ -23,9 +23,9 @@ class PitchRuleDeviant_1(Protocol_independentTrial):
     samplerate : int = 16000
     sequence_isi : float = 0.700
     isi : float = 0.050
-    nb_standard : int = 658
-    nb_deviant_pitch : int = 80
-    nb_deviant_rule : int = 80
+    nb_standard : int = 66
+    nb_deviant_pitch : int = 8
+    nb_deviant_rule : int = 8
     cycle : int = 3
 
     def __post_init__(self):

@@ -76,7 +76,6 @@ class Saffran(Protocol_independentTrial):
         return (all_sound,nb_element,df_info)
 
 
-
 @dataclass
 class Saffran_StressClue(Saffran):
     """

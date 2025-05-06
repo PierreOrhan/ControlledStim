@@ -82,6 +82,7 @@ class SparseCommunityGraph(FullCommunityGraph):
     nb_nodes : int = 12
     walk_length : int = 16
     graph : np.ndarray = field(init=False)
+
     def __post_init__(self):
         ## The graph is represented as an adjency matrix:
         communityA = np.array([[0,0,1,1,1,0],[0,0,1,1,1,1],[1,1,0,1,1,0],[1,1,1,0,0,1],[1,1,1,0,0,1],[0,1,0,1,1,0]],dtype=bool)
@@ -103,10 +104,13 @@ class SparseCommunityGraph(FullCommunityGraph):
         self.pattern = randomWalk
 
 @dataclass
-class SyllableTriplet(Sequence):
-    cycle: int = 3
+class HighSparseCommunityGraph(FullCommunityGraph):
+    nb_nodes : int = 12
+    walk_length : int = 16
+    graph : np.ndarray = field(init=False)
 
     def __post_init__(self):
+<<<<<<< HEAD:cstim/sounds/perExperiment/sequences/patterns.py
         self.pattern = list(range(self.cycle))
         self.nb_unique_elements = self.cycle
 
@@ -128,3 +132,23 @@ class WordStream(Sequence):
         for i in range(self.size_words):
             self.pattern[i::self.size_words] = self.pattern[::self.size_words]+i
         
+=======
+        ## The graph is represented as an adjency matrix:
+        communityA = np.array([[0,0,1,0,1,0],[0,0,0,1,0,1],[1,0,0,0,1,1],[0,1,0,0,1,1],[1,0,1,1,0,0],[0,1,1,1,0,0]],dtype=bool)
+        communityB = np.array([[0,1,0,1,0,1],[1,0,1,0,0,1],[0,1,0,1,1,0],[1,0,1,0,0,0],[0,0,1,0,0,1],[1,1,0,0,1,0]],dtype=bool)
+        graphTop = np.concatenate([communityA,np.zeros_like(communityA)],axis=1)
+        graphBot = np.concatenate([np.zeros_like(communityB),communityB],axis=1)
+        graph = np.concatenate([graphTop,graphBot],axis=0)
+        ## Add the link between the community:
+        graph[0,self.nb_nodes//2]=True
+        graph[self.nb_nodes//2,0]=True
+        graph[self.nb_nodes//2-1,-1]=True
+        graph[-1,self.nb_nodes//2-1]=True
+
+        startWalk = np.random.randint(0,self.nb_nodes,1)[0]
+        randomWalk = [startWalk]
+        for _ in range(self.walk_length-1):
+            possibilities = np.where(graph[randomWalk[-1]])[0]
+            randomWalk += [np.random.choice(possibilities,1)[0]]
+        self.pattern = randomWalk
+>>>>>>> 03d7e24a5cea4d365e55922529a29eabde006e27:sounds/perExperiment/sequences/patterns.py

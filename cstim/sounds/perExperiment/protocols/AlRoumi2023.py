@@ -17,13 +17,17 @@ class LOT(Protocol_independentTrial):
     samplerate : int = 16000
     motif_repeat : int = 10
     lot_seq : str = "pairs"
-    tones_fs : Union[list[list[float]],np.ndarray] = field(default_factory=list)
+    tones_fs : Union[list[float],np.ndarray,list[np.ndarray]] = field(default_factory=list)
 
     s_reg : list[Sound] = field(default=None)
     def __post_init__(self):
         self.name = self.name+"_"+self.lot_seq
-        sounds = [Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=f) for
-                  idf, f in enumerate(self.tones_fs)]
+        sounds = []
+        for idf, f in enumerate(self.tones_fs):
+            if type(f)==np.ndarray or type(f)==list:
+                sounds+=[Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=f)]
+            else:
+                sounds+=[Bip(name="bip-" + str(idf), samplerate=self.samplerate, duration=self.duration_tone, fs=[f])]
         self.sound_pool = Sound_pool.from_list(sounds)
         # Note: naming the bip is useful to know who is where.
         self.regSeq = lot_patterns[self.lot_seq](isi=self.isi)

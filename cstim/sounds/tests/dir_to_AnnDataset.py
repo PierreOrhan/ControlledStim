@@ -1,4 +1,4 @@
-# Defines a functions to perform the conversion from one type of dataset to this type of dataset
+import os
 import shutil
 import pandas as pd
 import os
@@ -6,12 +6,12 @@ import numpy as np
 from pathlib import Path
 from typing import Union,Optional
 # import soundfile as sf
-
 import scipy.io
-
 import tqdm
 import julius
 import torchaudio
+from pathlib import  Path
+
 
 def fromDir_toDataset(input_dir : Union[Path,str],output_dir : Optional[Union[Path,str]] = None,inplace:bool =True,
                       new_sr = 16000) -> None:
@@ -66,30 +66,22 @@ def fromDir_toDataset(input_dir : Union[Path,str],output_dir : Optional[Union[Pa
     df["sound_info_path"] = sound_info_paths
     df.to_csv(Path(output_dir) / "trials.csv", index=False)
 
-def simplify_subfolders(input_dir: Union[Path,str]):
-    """
-    Careful, dangerous!
-    Remove in a folder any file that is not a wav files. And move the wav files to the top while appending the path to its name
-    :param input_dir:
-    :return:
-    """
-    def rec_iter(input_dir :Path,start_dir :Path) -> list[tuple[Path,Path]]:
-        outputs = []
-        files = os.listdir(start_dir/input_dir)
-        for e in files:
-            if os.path.isdir(start_dir/input_dir/e):
-                outputs += rec_iter(input_dir/e,start_dir)
-            else:
-                if e.endswith(".wav"):
-                    if input_dir !=Path(""):
-                        outputs += [(start_dir / Path(str(input_dir).replace("/","_")+"_"+e),start_dir/input_dir/e)]
-                else:
-                    os.remove(start_dir/input_dir/e)
-        return outputs
-    for e in rec_iter(Path(""),start_dir=input_dir):
-        shutil.move(e[1],e[0])
 
-    ### remove the sub-directory:
-    for e in os.listdir(input_dir):
-        if os.path.isdir(input_dir/e):
-            shutil.rmtree(input_dir/e)
+# input_dir = Path("/auto/data5/speechExposureEphys/oscipek/nsd/sounds")
+# output_dir = Path("/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/nsd")
+# fromDir_toDataset(input_dir,output_dir,inplace=False)
+#
+# input_dir = Path("/auto/data5/speechExposureEphys/oscipek/ltq/sounds")
+# output_dir = Path("/media/pierre/NeuroData2/datasets/speechExposure_ltq_nsd/ltq")
+# fromDir_toDataset(input_dir,output_dir,inplace=False)
+
+# input_dir = Path("/media/pierre/NeuroData2/datasets/NSD_fmri_paradigm1/stimulis/sounds")
+# output_dir = Path("/media/pierre/NeuroData2/datasets/NSD_fmri_paradigm1/stimulis")
+# fromDir_toDataset(input_dir,output_dir,inplace=False)
+#
+# input_dir = Path("/media/pierre/NeuroData2/datasets/syntaxicProbingVseamless/modelmatch/generated/")
+# output_dir = Path("/media/pierre/NeuroData2/datasets/syntaxicProbingVseamless/modelmatch/stimulis/")
+input_dir = Path("/gpfsscratch/rech/fqt/uzz43va/NeuroData/syntaxicProbingVseamless/modelmatch/generated/generated")
+output_dir = Path("/gpfsscratch/rech/fqt/uzz43va/NeuroData/syntaxicProbingVseamless/modelmatch/stimulis/")
+for e in os.listdir(input_dir):
+    fromDir_toDataset(input_dir/e,output_dir/e,inplace=False)
